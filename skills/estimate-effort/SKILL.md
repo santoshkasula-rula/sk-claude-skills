@@ -1,34 +1,45 @@
 ---
 name: estimate-effort
-description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and/or Zoom transcript. Runs an interactive RAD interview, builds value-based milestones with calendar dates, and maps work across multiple repos when run at the root level.
+description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and/or Zoom transcript. Runs an interactive RAD interview, builds value-based milestones, and maps work across multiple repos when run at the root level.
 disable-model-invocation: true
-argument-hint: "<prd-file> [transcript-file] [--root]"
+argument-hint: "[--root]"
 allowed-tools: Read Bash(find *) Bash(ls *) Write
 ---
 
 # estimate-effort
 
-Generate an implementation plan from: $ARGUMENTS
+Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}` before writing the output file.
 
-Parse arguments:
-- Arg 1: path to the PRD file (required)
-- Arg 2: path to the Zoom transcript file (optional but strongly recommended)
-- `--root` flag (optional): enable multi-repo discovery and cross-repo dependency mapping
-
-If the PRD path is missing or unreadable, stop and ask for it. If no transcript is provided, note that risk and assumption signals will be limited — ask the user if they want to proceed without it.
-
-Read `OUTPUT_TEMPLATE.md` from the same directory as this skill before writing the output file.
+Check if `--root` was passed in $ARGUMENTS. If so, enable multi-repo discovery mode for Step 2.
 
 ---
 
-## Step 1 — Normalize inputs
+## Step 1 — Gather input files one at a time
 
-**Read the PRD** in full.
+Do not proceed to the next file until the current one is confirmed readable.
 
-**If a transcript is provided:** Read it, then normalize it before extracting signals:
+**1a. Ask for the PRD:**
+> "Please provide the path to your PRD file."
+
+Read the file. If it is unreadable or empty, say so and ask again. Once confirmed, acknowledge: "Got the PRD."
+
+**1b. Ask for the Zoom transcript:**
+> "Do you have a Zoom transcript or meeting notes for this project? If yes, provide the path — if not, type 'skip'."
+
+If provided, read it. Acknowledge: "Got the transcript." If skipped, note that risk signals will be limited.
+
+**1c. Ask for additional context files:**
+> "Any other files that would help — architecture docs, prior plans, API specs, design docs? Provide paths one at a time, or type 'done' to continue."
+
+Read each file as it is provided. Acknowledge each one: "Got [filename]." Repeat until the user types 'done'.
+
+Once all files are collected, list them back to the user in one message and confirm:
+> "I have: [list of files]. Starting analysis now."
+
+Then normalize any transcript collected:
 - Strip timestamps, speaker labels, and `[inaudible]` / `[crosstalk]` markers
 - Merge fragmented sentences split across speaker turns into coherent statements
-- The result is a clean prose summary of what was discussed — use this for Step 3, not the raw text
+- Use the normalized version for Step 3, not the raw text
 
 ---
 
@@ -84,7 +95,6 @@ Create 3–5 incremental milestones. Each milestone must:
 - Deliver a concrete, demonstrable artifact — not "work in progress"
 - Be sequenced so each one unblocks the next
 - Map explicitly to a business value or success criterion from the PRD
-- Include a **target completion date** calculated from the user's stated start date
 - Break effort into three distinct buckets — never roll them together:
   - **Engineering:** heads-down coding, design, and code review
   - **Operational:** deployment, config changes, infrastructure setup, secrets/env provisioning
