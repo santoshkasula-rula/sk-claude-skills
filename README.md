@@ -19,4 +19,4 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 
 | Skill | Description |
 |-------|-------------|
-| _(none yet)_ | |
+| [estimate-effort](skills/estimate-effort/SKILL.md) | Analyzes PRDs and Zoom transcripts to generate a multi-repo implementation plan with RAD analysis |
