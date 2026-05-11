@@ -1,6 +1,6 @@
 ---
 name: estimate-effort
-description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and/or Zoom transcript. Runs an interactive RAD interview, builds value-based milestones, and maps work across multiple repos when run at the root level.
+description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and/or Zoom transcript. Extracts RAD from documents, then confirms gaps with the user before writing the plan.
 disable-model-invocation: true
 argument-hint: "[--root]"
 allowed-tools: Read Bash(find *) Bash(ls *) Write
@@ -8,119 +8,105 @@ allowed-tools: Read Bash(find *) Bash(ls *) Write
 
 # estimate-effort
 
-Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}` before writing the output file.
-
-Check if `--root` was passed in $ARGUMENTS. If so, enable multi-repo discovery mode for Step 2.
+Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}`.
+If `--root` is in $ARGUMENTS, enable multi-repo discovery in Step 2.
 
 ---
 
-## Step 1 — Gather input files one at a time
+## Step 1 — Collect files
 
-Do not proceed to the next file until the current one is confirmed readable.
+Ask for each file in sequence. Read it before asking for the next.
 
-**1a. Ask for the PRD:**
-> "Please provide the path to your PRD file."
-
-Read the file. If it is unreadable or empty, say so and ask again. Once confirmed, acknowledge: "Got the PRD."
-
-**1b. Ask for the Zoom transcript:**
-> "Do you have a Zoom transcript or meeting notes for this project? If yes, provide the path — if not, type 'skip'."
-
-If provided, read it. Acknowledge: "Got the transcript." If skipped, note that risk signals will be limited.
-
-**1c. Ask for additional context files:**
-> "Any other files that would help — architecture docs, prior plans, API specs, design docs? Provide paths one at a time, or type 'done' to continue."
-
-Read each file as it is provided. Acknowledge each one: "Got [filename]." Repeat until the user types 'done'.
-
-Once all files are collected, list them back to the user in one message and confirm:
-> "I have: [list of files]. Starting analysis now."
-
-Then normalize any transcript collected:
-- Strip timestamps, speaker labels, and `[inaudible]` / `[crosstalk]` markers
-- Merge fragmented sentences split across speaker turns into coherent statements
-- Use the normalized version for Step 3, not the raw text
+1. **PRD** — "Path to your PRD?" — required, re-ask if unreadable.
+2. **Transcript** — "Zoom transcript or meeting notes? (path or skip)" — if provided, normalize it: strip timestamps, speaker labels, `[inaudible]`, and merge fragmented turns into prose.
+3. **Additional context** — "Any other files? (architecture docs, API specs, prior plans — path or done)" — repeat until 'done'.
 
 ---
 
 ## Step 2 — Repo discovery (only if `--root`)
 
-Run:
-
 ```bash
 find . -maxdepth 3 \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" -o -name "Cargo.toml" -o -name "pom.xml" \) ! -path "*/node_modules/*" ! -path "*/.git/*"
 ```
 
-List each service/repo found. Then scan for shared library imports or cross-service references to identify which repos affect each other. Note any repo that appears to be a shared dependency.
+Identify each service and any cross-repo shared dependencies.
 
 ---
 
 ## Step 3 — Extract signals
 
-**From the PRD**, extract:
-- Project name and objective
-- Key features and user stories
-- Business value statements and success metrics (exact numbers if present, e.g. "reduce drop-off by 15%")
-- Anything explicitly listed as out of scope
+**From all documents**, extract and record:
 
-**From the normalized transcript** (if available), extract:
-- Technical components and systems mentioned
-- **Anxiety markers** — phrases like: *"I'm worried about"*, *"legacy"*, *"not sure how long"*, *"that's tricky"*, *"this is risky"*, *"depends on"*, *"blocked by"*, *"we'd need to check with"*, *"I've never touched that"*
-- Named blockers, external dependencies, or third-party requirements
-- Any open questions the team raised without resolution
+| Signal | Source |
+| :--- | :--- |
+| Project name, objective, success metrics | PRD |
+| Features in scope, features explicitly out of scope | PRD |
+| Technical components mentioned | Transcript / docs |
+| Risks detected — anxiety markers: *"worried about"*, *"legacy"*, *"not sure how long"*, *"tricky"*, *"depends on"*, *"blocked by"*, *"never touched"* | Transcript / docs |
+| Named blockers, external dependencies, open questions | Transcript / docs |
+| Assumptions stated or implied | All sources |
 
-**Conflict rule:** If the PRD describes something as straightforward but the transcript contains an anxiety marker about the same component, **the anxiety marker wins**. Flag that component as high risk regardless of what the PRD says. The transcript is ground truth from the people doing the work.
-
-For every anxiety marker found, record the component it refers to — it will receive a 🔴 risk flag and a time buffer in the milestones.
+**Conflict rule:** Transcript anxiety markers override PRD optimism on the same component — always.
 
 ---
 
-## Step 4 — RAD interview (mandatory — do not skip, do not assume answers)
+## Step 4 — RAD confirmation (targeted, not a full interview)
 
-Ask all questions in a single message. Wait for the user's complete response before continuing to Step 5.
+Present what you extracted as a pre-filled draft. Only ask about genuine gaps — do not re-ask for things already found in the documents.
 
-> **Before I write the plan, I need a few ground-truth answers. Please fill these in:**
+> **Here's what I found in your documents — please correct or fill in any blanks:**
 >
-> 1. **Risks** — What is the riskiest or most uncertain part of this work? (e.g. legacy systems, unclear requirements, unfamiliar tech)
-> 2. **Assumptions** — What are we assuming is already true or in place? (e.g. infra, staging access, API contracts, team availability)
-> 3. **Dependencies** — What are we blocked on or waiting for? (e.g. another team's PR, a third-party approval, a shared service not yet built)
-> 4. **Scope boundary** — What are we explicitly NOT building in this phase? (List anything adjacent that might be assumed.)
-> 5. **Success criteria** — How will we know this is done and working? (e.g. metric targets, stakeholder sign-off, a specific user journey working end-to-end)
+> **Risks**
+> - [Extracted risk 1] *(source)*
+> - [Extracted risk 2] *(source)*
+> - Anything I missed?
+>
+> **Assumptions**
+> - [Extracted assumption 1] *(source)*
+> - Anything I missed?
+>
+> **Dependencies**
+> - [Extracted dependency 1] *(source)*
+> - Anything I missed?
+>
+> **Out of scope** — [Extracted or "not found — what should be excluded?"]
+>
+> **Success criteria** — [Extracted or "not found — how will you know this is done?"]
+
+Wait for the user's response. Merge corrections and additions before proceeding.
 
 ---
 
 ## Step 5 — Design milestones
 
-Create 3–5 incremental milestones. Each milestone must:
-- Deliver a concrete, demonstrable artifact — not "work in progress"
-- Be sequenced so each one unblocks the next
-- Map explicitly to a business value or success criterion from the PRD
-- Break effort into three distinct buckets — never roll them together:
-  - **Engineering:** heads-down coding, design, and code review
-  - **Operational:** deployment, config changes, infrastructure setup, secrets/env provisioning
-  - **Rollout:** QA, testing cycles, feature flag ramp, stakeholder demo, incremental rollout steps
-- Carry a risk indicator: 🔴 if it touches an anxiety-marker component or RAD-flagged risk, 🟡 for medium uncertainty, 🟢 for well-understood work
+Create 3–5 milestones. Each must:
+- Deliver a concrete, demonstrable artifact
+- Be sequenced so each unblocks the next
+- Map to a specific business value from the PRD
+- Break effort into three buckets (never combine):
+  - **Engineering** — coding, design, code review
+  - **Operational** — deployment, infra, config, secrets
+  - **Rollout** — QA, testing, feature flag ramp, stakeholder demo
+- Carry a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
 
-**Buffer rule:** Sum each effort column independently across all milestones. Add 20% to the Engineering total only — Operational and Rollout estimates are typically known quantities and should not be inflated. Show raw and buffered Engineering totals separately in the Executive Summary. Never embed the buffer inside individual milestones.
+**Buffer:** 20% added to Engineering total only. Show raw + buffered separately. Never embed inside milestones.
 
-If `--root`: assign each milestone's tasks to the responsible repo(s). Sequence milestones to respect cross-repo dependencies — a repo that provides a contract must reach its milestone before dependent repos can proceed.
+If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 ---
 
 ## Step 6 — Write IMPLEMENTATION_PLAN.md
 
-Write the plan to `IMPLEMENTATION_PLAN.md` in the current directory, following the structure in `OUTPUT_TEMPLATE.md`.
+Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
-Content rules:
+- **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), risk callout if any 🔴, success criteria.
+- **Scope** — in scope and out of scope lists.
+- **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
+- **RAD** — every item cites its source (PRD, Transcript, or User).
+- **Technical Breakdown** — one section per repo, specific files/areas, one-line rationale each.
+- **Cross-repo map** — only if `--root`.
+- **Engineer Updates** — empty table, leave for the team.
 
-- **Executive Summary**: non-technical language throughout. Repo names must not appear here — use business system names (e.g. "checkout flow", "payment processing"). Include: business goal, raw estimate, buffered estimate, a one-sentence risk callout if any milestone is 🔴, and success criteria.
-- **Scope section**: include both "In scope" and "Out of scope" lists, sourced from the PRD and the user's Step 4 answer.
-- **Milestones table**: every row has a deliverable, a "why this matters" business value statement, and a risk indicator. Effort is split across three columns: Engineering, Operational, and Rollout. Never combine them.
-- **RAD section**: every entry must cite its source (Transcript, PRD, or RAD interview). Combine all three sources.
-- **Technical Breakdown**: one section per repo; list specific files or areas to change with a one-line rationale. Enough for an engineer to start, not a full spec.
-- **Cross-repo dependency map** (if `--root`): show which milestone in which repo must complete before another can start.
-- **Engineer Updates table**: leave empty rows — this is a living document.
-
-After writing the file, output a two-line routing note:
-- "Share with PMs / leadership: Executive Summary, Scope, Milestones"
-- "Share with engineers: full document"
+End with:
+> **Share with PMs / leadership:** Executive Summary, Scope, Milestones
+> **Share with engineers:** full document
