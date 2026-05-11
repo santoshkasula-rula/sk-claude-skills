@@ -35,7 +35,7 @@ Identify each service and any cross-repo shared dependencies.
 
 ## Step 3 — Extract signals
 
-**From all documents**, extract and record:
+**From all documents**, extract and record. Use the exact terminology, feature names, and system names as they appear in the documents — do not rename or generalize them.
 
 | Signal | Source |
 | :--- | :--- |
@@ -79,7 +79,9 @@ Wait for the user's response. Merge corrections and additions before proceeding.
 
 ## Step 5 — Design milestones
 
-Create 3–5 milestones. Each must:
+Create 3–5 milestones. Use the language from the documents — milestone names, deliverable descriptions, and business value statements must reflect the actual words, feature names, and goals used in the PRD, transcript, and any additional context provided. Do not substitute generic placeholders.
+
+Each milestone must:
 - Deliver a concrete, demonstrable artifact
 - Be sequenced so each unblocks the next
 - Map to a specific business value from the PRD
