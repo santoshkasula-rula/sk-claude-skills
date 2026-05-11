@@ -75,7 +75,6 @@ Ask all questions in a single message. Wait for the user's complete response bef
 > 3. **Dependencies** — What are we blocked on or waiting for? (e.g. another team's PR, a third-party approval, a shared service not yet built)
 > 4. **Scope boundary** — What are we explicitly NOT building in this phase? (List anything adjacent that might be assumed.)
 > 5. **Success criteria** — How will we know this is done and working? (e.g. metric targets, stakeholder sign-off, a specific user journey working end-to-end)
-> 6. **Start date** — When does the team begin? (Used to calculate milestone target dates.)
 
 ---
 
@@ -86,10 +85,13 @@ Create 3–5 incremental milestones. Each milestone must:
 - Be sequenced so each one unblocks the next
 - Map explicitly to a business value or success criterion from the PRD
 - Include a **target completion date** calculated from the user's stated start date
-- Include effort in business days broken down as: feature work + testing/review (never omit testing)
+- Break effort into three distinct buckets — never roll them together:
+  - **Engineering:** heads-down coding, design, and code review
+  - **Operational:** deployment, config changes, infrastructure setup, secrets/env provisioning
+  - **Rollout:** QA, testing cycles, feature flag ramp, stakeholder demo, incremental rollout steps
 - Carry a risk indicator: 🔴 if it touches an anxiety-marker component or RAD-flagged risk, 🟡 for medium uncertainty, 🟢 for well-understood work
 
-**Buffer rule:** Sum the raw milestone estimates. Add 20% to that sum. Show the raw total and the buffered total separately in the Executive Summary. Do not silently embed the buffer inside individual milestones.
+**Buffer rule:** Sum each effort column independently across all milestones. Add 20% to the Engineering total only — Operational and Rollout estimates are typically known quantities and should not be inflated. Show raw and buffered Engineering totals separately in the Executive Summary. Never embed the buffer inside individual milestones.
 
 If `--root`: assign each milestone's tasks to the responsible repo(s). Sequence milestones to respect cross-repo dependencies — a repo that provides a contract must reach its milestone before dependent repos can proceed.
 
@@ -101,9 +103,9 @@ Write the plan to `IMPLEMENTATION_PLAN.md` in the current directory, following t
 
 Content rules:
 
-- **Executive Summary**: non-technical language throughout. Repo names must not appear here — use business system names (e.g. "checkout flow", "payment processing"). Include: business goal, raw estimate, buffered estimate, target completion date, a one-sentence risk callout if any milestone is 🔴, and success criteria.
+- **Executive Summary**: non-technical language throughout. Repo names must not appear here — use business system names (e.g. "checkout flow", "payment processing"). Include: business goal, raw estimate, buffered estimate, a one-sentence risk callout if any milestone is 🔴, and success criteria.
 - **Scope section**: include both "In scope" and "Out of scope" lists, sourced from the PRD and the user's Step 4 answer.
-- **Milestones table**: every row has a deliverable, a "why this matters" business value statement, a target date, and a risk indicator. The effort cell shows `[feature days] + [test/review days]`.
+- **Milestones table**: every row has a deliverable, a "why this matters" business value statement, and a risk indicator. Effort is split across three columns: Engineering, Operational, and Rollout. Never combine them.
 - **RAD section**: every entry must cite its source (Transcript, PRD, or RAD interview). Combine all three sources.
 - **Technical Breakdown**: one section per repo; list specific files or areas to change with a one-line rationale. Enough for an engineer to start, not a full spec.
 - **Cross-repo dependency map** (if `--root`): show which milestone in which repo must complete before another can start.

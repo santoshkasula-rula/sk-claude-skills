@@ -17,10 +17,11 @@
 | **Business Goal** | [e.g. Reduce checkout drop-off by 15%] |
 | **Success Criteria** | [How we'll know this is done — e.g. "Checkout completion rate ≥ 85% in staging load test"] |
 | **Business Systems Affected** | [Plain-language names — e.g. Checkout Flow, Payment Processing, Customer Portal] |
-| **Raw Estimate** | [X weeks] across [N] milestones |
-| **Delivery Estimate** | [X weeks + 20% buffer] — Target completion: [Date] |
+| **Engineering Effort** | [X days raw] → [X days + 20% buffer] |
+| **Operational Effort** | [X days — deployment, infra, config, secrets provisioning] |
+| **Rollout Effort** | [X days — QA, testing cycles, feature flag ramp, stakeholder demo, incremental rollout] |
+| **Total Effort** | [Sum of all three buckets, buffered Engineering + actual Operational + actual Rollout] |
 | **Risk Summary** | [e.g. "One milestone carries high risk due to legacy auth layer — see RAD section." or "No high-risk milestones identified."] |
-| **Target Start** | [Date] |
 
 ---
 
@@ -40,16 +41,17 @@
 
 > Each milestone delivers something demonstrable. Sequenced so each one unblocks the next.
 
-| # | Milestone | Deliverable | Why It Matters | Effort (feature + test/review) | Target Date | Risk |
-| :---: | :--- | :--- | :--- | :---: | :---: | :---: |
-| M1 | [Name] | [Concrete artifact — e.g. "API contract + DB schema merged to main"] | [Business value — e.g. "Unblocks parallel frontend and backend work"] | [X days + Y days] | [Date] | 🔴 / 🟡 / 🟢 |
-| M2 | [Name] | [Concrete artifact] | [Business value] | [X days + Y days] | [Date] | 🔴 / 🟡 / 🟢 |
-| M3 | [Name] | [Concrete artifact] | [Business value] | [X days + Y days] | [Date] | 🔴 / 🟡 / 🟢 |
+| # | Milestone | Deliverable | Why It Matters | Engineering | Operational | Rollout | Risk |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| M1 | [Name] | [Concrete artifact — e.g. "API contract + DB schema merged to main"] | [Business value — e.g. "Unblocks parallel frontend and backend work"] | [X days] | [Y days] | [Z days] | 🔴 / 🟡 / 🟢 |
+| M2 | [Name] | [Concrete artifact] | [Business value] | [X days] | [Y days] | [Z days] | 🔴 / 🟡 / 🟢 |
+| M3 | [Name] | [Concrete artifact] | [Business value] | [X days] | [Y days] | [Z days] | 🔴 / 🟡 / 🟢 |
 
 **Effort totals:**
-- Raw: [sum of all milestone days]
-- With 20% buffer: [buffered total]
-- Target completion: [Date]
+- Engineering: [raw sum] → [+20% buffer]
+- Operational: [sum — no buffer]
+- Rollout: [sum — no buffer]
+- **Total: [all three combined]**
 
 **Risk legend:** 🔴 High · 🟡 Medium · 🟢 Low
 
@@ -137,6 +139,6 @@ M1: [repo-a] — [deliverable]
 
 > Living document. Engineers: log estimate changes here as you uncover more context. PMs: check this table for the most current delivery date.
 
-| Date | Engineer | Milestone | What changed / Why | Revised Estimate | New Target Date |
-| :--- | :--- | :---: | :--- | :---: | :---: |
-| | | | | | |
+| Date | Engineer | Milestone | What changed / Why | Engineering | Operational | Rollout |
+| :--- | :--- | :---: | :--- | :---: | :---: | :---: |
+| | | | | | | |
