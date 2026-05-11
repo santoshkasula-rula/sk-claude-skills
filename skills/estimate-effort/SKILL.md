@@ -1,127 +1,96 @@
+---
+name: estimate-effort
+description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and Zoom transcript. Runs an interactive RAD interview, builds value-based milestones, and maps work across multiple repos when run at the root level.
+disable-model-invocation: true
+argument-hint: "<prd-file> <transcript-file> [--root]"
+allowed-tools: Read Bash(find *) Bash(ls *) Write
+---
+
 # estimate-effort
 
-Analyzes PRDs and Zoom transcripts to generate a multi-repo implementation plan with RAD (Risks, Assumptions, Dependencies) analysis.
+Generate an implementation plan from: $ARGUMENTS
 
-## Trigger
+Parse arguments:
+- Arg 1: path to the PRD file
+- Arg 2: path to the Zoom transcript file
+- `--root` flag (optional): enable multi-repo discovery and cross-repo dependency mapping
 
-User invokes `/estimate-effort` or asks to "estimate effort", "create an implementation plan", or "analyze this PRD/transcript".
+If either file path is missing or unreadable, ask the user to provide it before continuing.
 
-## Inputs
+---
 
-| Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `prd_path` | string | Path to the PRD file |
-| `transcript_path` | string | Path to the Zoom transcript file |
-| `target_output` | string | Output file name (default: `IMPLEMENTATION_PLAN.md`) |
-| `mode` | `root` \| `local` | `root` = scan for all repos; `local` = current repo only |
+## Step 1 — Read source documents
 
-## Steps
+Read both the PRD and the transcript in full.
 
-### 1. Read Inputs
+---
 
-Read the PRD and transcript files provided by the user.
+## Step 2 — Repo discovery (only if `--root`)
 
-### 2. Contextual Scan (if `mode == "root"`)
-
-Run a discovery phase to map all services in scope:
+Run:
 
 ```bash
-find . -maxdepth 2 \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" \)
+find . -maxdepth 3 \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" -o -name "Cargo.toml" -o -name "pom.xml" \) ! -path "*/node_modules/*" ! -path "*/.git/*"
 ```
 
-Then scan for cross-repo imports or shared library references to identify ripple-effect risks (e.g., a change in `repo-a` that breaks `repo-b`).
+From the results, list each service/repo found. Then scan for shared library imports or cross-service references to identify which repos affect each other.
 
-### 3. Transcript Sentiment Analysis
+---
 
-Parse the transcript for "Anxiety Markers" — phrases that signal engineer concern:
+## Step 3 — Extract signals from documents
 
-- Pattern examples: *"I'm worried about..."*, *"that part scares me"*, *"legacy X is fragile"*, *"not sure how long that'll take"*
-- When an anxiety marker is detected for a component, automatically:
-  - Upgrade the **Risk** level for that milestone
-  - Add a time buffer to the estimate for that area
+From the **PRD**, extract:
+- Project name and objective
+- Key features and user stories
+- Business value statements and success metrics
 
-### 4. RAD Interview (Mandatory — Do Not Skip)
+From the **transcript**, extract:
+- Technical components and systems mentioned
+- **Anxiety markers** — phrases like: *"I'm worried about"*, *"legacy"*, *"not sure how long"*, *"that's tricky"*, *"depends on"*, *"blocked by"*, *"we'd need to check with"*
+- Named blockers, external dependencies, or third-party requirements
+- Any named risks or open questions the team raised
 
-Before generating the final plan, stop and ask the engineer:
+For every anxiety marker found, record the component it refers to. That component will receive a risk flag and a time buffer in the milestones.
 
-> **"Wait! Before I finalize the math, I need the 'Ground Truth' from the engineers. Please answer these three things:"**
+---
+
+## Step 4 — RAD interview (mandatory — do not skip, do not assume answers)
+
+Ask the user all three questions together in a single message. Wait for their full response before proceeding to Step 5.
+
+> **Before I write the plan, I need ground-truth input from the team. Please answer all three:**
 >
-> - **Risks:** What is the 'scariest' part of this codebase relative to this feature?
-> - **Assumptions:** Are we assuming any infrastructure (e.g., CI/CD, Secrets, staging env) is already in place?
-> - **Dependencies:** Are we blocked by another team's PR or a third-party API approval?
-
-Incorporate the answers into the RAD section and adjust effort estimates accordingly.
-
-### 5. Generate `IMPLEMENTATION_PLAN.md`
-
-Write the output file using the template below. Apply a **20% RAD buffer** to the total estimated effort.
+> 1. **Risks** — What is the riskiest or most uncertain part of this work? (e.g. legacy systems, unclear requirements, unfamiliar tech)
+> 2. **Assumptions** — What are we assuming is already true or in place? (e.g. infra, staging access, API contracts, team availability)
+> 3. **Dependencies** — What are we blocked on or waiting for? (e.g. another team's PR, a third-party approval, a shared service not yet built)
 
 ---
 
-## Output Template
+## Step 5 — Design milestones
 
-```markdown
-# 🗺️ Implementation Plan: [Project Name]
-**Date:** [Today's Date] | **Current Status:** Draft (Awaiting Engineer Sign-off)
+Create 3–5 incremental milestones. Each milestone must:
+- Deliver a concrete, demonstrable artifact (not just "work in progress")
+- Be sequenced so earlier milestones unblock later ones
+- Map to a specific business value from the PRD
+- Carry a realistic effort estimate in days or weeks
+- Be flagged with a risk indicator if it touches a component from an anxiety marker or RAD answer
 
----
+Apply a **20% buffer** to the total estimated effort to account for RAD risks.
 
-## 🎯 Executive Summary (PM Focus)
-
-* **Primary Value:** [Business value derived from PRD]
-* **Total Estimated Effort:** [X] Weeks (including 20% RAD buffer)
-* **Impacted Systems:** `[repo-1]`, `[repo-2]`, `[repo-3]`
-
----
-
-## 🗓️ Value-Based Milestones
-
-| Milestone | Deliverable | Business Value | Est. Effort |
-| :--- | :--- | :--- | :--- |
-| **M1: Core Contract** | API definitions & DB Schema | Unblocks parallel frontend/backend work. | 4 Days |
-| **M2: Happy Path** | End-to-end basic flow | Allows PMs to demo the feature to stakeholders. | 1 Week |
-| **M3: Hardening** | Edge cases & Load testing | Ensures production stability. | 3 Days |
+If `--root`: assign each milestone's tasks to the responsible repo(s) and explicitly note cross-repo dependencies. Sequence milestones to respect those dependencies.
 
 ---
 
-## ⚠️ RAD Analysis (The "No-Surprises" Section)
+## Step 6 — Write IMPLEMENTATION_PLAN.md
 
-### 🔴 Risks
-* **[Risk 1]:** [Description]
-    * **Mitigation:** [e.g., "Implement feature flag first"]
+Write the plan to `IMPLEMENTATION_PLAN.md` in the current directory using the output structure defined in [`OUTPUT_TEMPLATE.md`](OUTPUT_TEMPLATE.md).
 
-### 🟡 Assumptions
-* **[Assumption 1]:** [e.g., "We assume the `v2/payments` endpoint is idempotent."]
-* **[Assumption 2]:** [e.g., "Engineers have access to the staging environment by [Date]."]
+Content rules:
+- **Executive Summary**: written for a non-technical audience — no jargon, focus on business value and timeline
+- **Milestones table**: every row must have a deliverable, a "why this matters" business value statement, and an effort estimate
+- **RAD section**: combine signals extracted from the transcript (Step 3) with the user's answers (Step 4) — cite the source for each item
+- **Technical Breakdown**: one section per repo; list the specific files or areas to change with a one-line rationale per entry. Enough detail for an engineer to pick up the work, not a full spec.
+- **Cross-repo dependency list** (if `--root`): show which milestones block which, and across which repos
+- **Engineer Updates table**: leave empty — this is a living document for engineers to fill in as estimates change
 
-### 🔵 Dependencies (Multi-Project)
-* **Internal:** [e.g., "`billing-engine` requires the new schema from `db-migrations`."]
-* **External:** [e.g., "Awaiting Stripe API key rotation."]
-
----
-
-## 💻 Technical Breakdown & Patterns
-
-### Repository: `[Repo-Name]`
-* **Architectural Suggestion:** [Pattern recommendation based on file structure scan]
-* **Key Files to Modify:**
-    1. `[path/to/file]` — [What to change and why]
-    2. `[path/to/file]` — [What to change and why]
-
----
-
-## 📝 Engineer Updates
-
-| Date | Engineer | Update/Pivot | New Est. |
-| :--- | :--- | :--- | :--- |
-| | | | |
-```
-
----
-
-## Notes
-
-- Always run the RAD Interview (Step 4) before writing the output — never skip it.
-- Anxiety markers in transcripts take precedence over optimistic estimates from the PRD.
-- When `mode == "root"`, dependency detection between repos is required before milestone sequencing.
-- The 20% RAD buffer is applied to the **total** effort, not per milestone.
+After writing the file, confirm the path and tell the user which section to share with PMs vs. engineers.
