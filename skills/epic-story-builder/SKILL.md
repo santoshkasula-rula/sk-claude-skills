@@ -71,5 +71,13 @@ From the file, extract:
 
 Write to `Epics and Stories - [Project Name].md` following `OUTPUT_TEMPLATE.md`.
 
+The file has two parallel representations — keep them in sync:
+
+**YAML block (Jira Import Data section):** machine-readable, one entry per epic and story. Every field must be populated — no nulls except `rad_flag` when genuinely not applicable. `effort_days` is a number (not a string). `risk` is `high`, `medium`, or `low`. Labels are lowercase slugs.
+
+**Markdown tables:** human-readable planning artifact. Same data, formatted for review in PRs and demos.
+
+Both must reflect identical story details — if a story changes in one, it changes in both.
+
 End with:
 > **Next step:** Review story list with the team, adjust sizing, then run `/jira-import` to push to Jira. *(coming soon)*
