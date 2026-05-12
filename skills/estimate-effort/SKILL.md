@@ -129,7 +129,7 @@ If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 Write to `TECHNICAL_DESIGN.md` in the current directory. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
-- **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), success criteria, and a short RAD summary (2–4 bullets max) — one sentence each on the most significant risk, the key assumption the estimate depends on, and any hard dependency that could shift the timeline.
+- **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), success criteria, risk summary (one sentence if any 🔴 milestone), assumptions (key assumptions the estimate depends on), and dependencies (hard blockers that could shift the plan).
 - **Scope** — in scope and out of scope lists.
 - **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
 - **RAD** — every item cites its source (PRD, Transcript, or User).
