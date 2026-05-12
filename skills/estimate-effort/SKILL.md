@@ -50,33 +50,11 @@ Identify each service and any cross-repo shared dependencies.
 
 ---
 
-## Step 4 — Codebase pattern scan
+## Step 4 — RAD confirmation
 
-Before forming any opinions, scan the codebase to understand how things are currently built. Look for:
+Send the pre-filled RAD draft and ask about tradeoff analysis in one message. Only surface gaps — do not re-ask for things already confirmed in the documents.
 
-- How similar features are structured (routing, layering, data access patterns)
-- How the UI components interact with backend services (REST vs event-driven, polling vs push, shared state management)
-- How config, secrets, and environment differences are handled
-- How existing cross-service calls are made (sync vs async, retry patterns, error handling)
-- Any evidence of prior migrations, refactors, or tech debt comments near the areas this feature will touch
-
-Use `find`, `ls`, and `Read` on key files. Do not scan exhaustively — focus on the areas most relevant to what the PRD is asking for.
-
-From this scan, form 2–4 specific design tradeoffs the team will need to decide. Each tradeoff must:
-- Be grounded in something you actually observed in the codebase — not a generic best practice
-- Present two concrete options (Option A / Option B) with a one-line consequence for each
-- Flag which RAD risks or dependencies make one option safer than the other
-
----
-
-## Step 4b — RAD + tradeoffs confirmation (one message, not two)
-
-Send one message combining the pre-filled RAD draft and the design tradeoffs. Do not send two separate messages. Only surface gaps — do not re-ask for things already confirmed in the documents.
-
-> **Here's what I found — correct or add anything, and weigh in on the tradeoffs:**
->
-> ---
-> **RAD**
+> **Here's what I found — correct or add anything:**
 >
 > Risks: [list with source] — *anything missing?*
 > Assumptions: [list with source] — *anything missing?*
@@ -85,23 +63,48 @@ Send one message combining the pre-filled RAD draft and the design tradeoffs. Do
 > Success criteria: [extracted, or "how will you know this is done?"]
 >
 > ---
-> **Design tradeoffs — your call**
+> **Run tradeoff analysis?** (default: no)
+> Scans the codebase for design patterns and surfaces 2–4 decisions you'll need to make before implementation. Takes a few extra minutes.
+> - **Yes** — full codebase scan, grounded tradeoff options
+> - **No** — skip for now, you can add design notes manually
+> - Or paste your own design constraints/preferences and I'll factor them in.
+
+Wait for the user's response before continuing.
+
+- If **yes**: run Step 4b, then proceed to Step 5.
+- If **no** or no response on tradeoffs: proceed directly to Step 5. Skip Step 4b.
+- If the user pastes their own input: record it as design decisions, skip Step 4b, proceed to Step 5.
+
+---
+
+## Step 4b — Codebase tradeoff analysis (only if user said yes)
+
+Scan the codebase to understand how things are currently built. Focus only on areas the PRD touches. Look for:
+
+- How similar features are structured (routing, layering, data access patterns)
+- How UI components interact with backend services (REST vs event-driven, polling vs push, shared state)
+- How existing cross-service calls are made (sync vs async, retry patterns, error handling)
+- Any tech debt signals near the areas this feature will touch
+
+Use `find`, `ls`, and `Read` on key files. Do not scan exhaustively.
+
+Form 2–4 tradeoffs. Each must:
+- Be grounded in something observed in the codebase — not a generic best practice
+- Present Option A / Option B with a one-line consequence each
+- Flag which option is safer given the RAD risks
+
+> **Design tradeoffs — your call:**
 >
-> *[Tradeoff 1 — grounded in codebase observation]*
+> *[Tradeoff 1 — what you observed, what the decision is]*
 > - **Option A:** [what it is] → [consequence]
 > - **Option B:** [what it is] → [consequence]
-> - *Leans toward A/B because [RAD risk or dependency that tips the balance]*
->
-> *[Tradeoff 2]*
-> - **Option A:** [what it is] → [consequence]
-> - **Option B:** [what it is] → [consequence]
-> - *Leans toward A/B because [reason from codebase or RAD]*
+> - *Leans toward A/B because [RAD risk or codebase reason]*
 >
 > *(repeat for each tradeoff)*
 >
 > Which options are you leaning toward?
 
-Wait for the user's response. Merge all corrections, additions, and tradeoff decisions before proceeding to Step 5. Record each chosen option — it will inform the Technical Breakdown.
+Wait for the user's response. Record each decision — it will inform the Technical Breakdown.
 
 ---
 
