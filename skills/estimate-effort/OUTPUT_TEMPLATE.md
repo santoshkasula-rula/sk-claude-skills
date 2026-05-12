@@ -94,6 +94,7 @@
 
 **Business system:** [Plain-language name — e.g. Payment Processing]
 **Milestones:** M1, M2
+**Design decisions:** [e.g. "Chose sync API call over event bus — existing service calls in this repo are all synchronous and async infra is not yet in place"]
 
 | Area / File | Change needed | Rationale |
 | :--- | :--- | :--- |

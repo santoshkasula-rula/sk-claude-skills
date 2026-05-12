@@ -50,30 +50,58 @@ Identify each service and any cross-repo shared dependencies.
 
 ---
 
-## Step 4 — RAD confirmation (targeted, not a full interview)
+## Step 4 — Codebase pattern scan
 
-Present what you extracted as a pre-filled draft. Only ask about genuine gaps — do not re-ask for things already found in the documents.
+Before forming any opinions, scan the codebase to understand how things are currently built. Look for:
 
-> **Here's what I found in your documents — please correct or fill in any blanks:**
->
-> **Risks**
-> - [Extracted risk 1] *(source)*
-> - [Extracted risk 2] *(source)*
-> - Anything I missed?
->
-> **Assumptions**
-> - [Extracted assumption 1] *(source)*
-> - Anything I missed?
->
-> **Dependencies**
-> - [Extracted dependency 1] *(source)*
-> - Anything I missed?
->
-> **Out of scope** — [Extracted or "not found — what should be excluded?"]
->
-> **Success criteria** — [Extracted or "not found — how will you know this is done?"]
+- How similar features are structured (routing, layering, data access patterns)
+- How the UI components interact with backend services (REST vs event-driven, polling vs push, shared state management)
+- How config, secrets, and environment differences are handled
+- How existing cross-service calls are made (sync vs async, retry patterns, error handling)
+- Any evidence of prior migrations, refactors, or tech debt comments near the areas this feature will touch
 
-Wait for the user's response. Merge corrections and additions before proceeding.
+Use `find`, `ls`, and `Read` on key files. Do not scan exhaustively — focus on the areas most relevant to what the PRD is asking for.
+
+From this scan, form 2–4 specific design tradeoffs the team will need to decide. Each tradeoff must:
+- Be grounded in something you actually observed in the codebase — not a generic best practice
+- Present two concrete options (Option A / Option B) with a one-line consequence for each
+- Flag which RAD risks or dependencies make one option safer than the other
+
+---
+
+## Step 4b — RAD + tradeoffs confirmation (one message, not two)
+
+Send one message combining the pre-filled RAD draft and the design tradeoffs. Do not send two separate messages. Only surface gaps — do not re-ask for things already confirmed in the documents.
+
+> **Here's what I found — correct or add anything, and weigh in on the tradeoffs:**
+>
+> ---
+> **RAD**
+>
+> Risks: [list with source] — *anything missing?*
+> Assumptions: [list with source] — *anything missing?*
+> Dependencies: [list with source] — *anything missing?*
+> Out of scope: [extracted, or "not found — what should be excluded?"]
+> Success criteria: [extracted, or "how will you know this is done?"]
+>
+> ---
+> **Design tradeoffs — your call**
+>
+> *[Tradeoff 1 — grounded in codebase observation]*
+> - **Option A:** [what it is] → [consequence]
+> - **Option B:** [what it is] → [consequence]
+> - *Leans toward A/B because [RAD risk or dependency that tips the balance]*
+>
+> *[Tradeoff 2]*
+> - **Option A:** [what it is] → [consequence]
+> - **Option B:** [what it is] → [consequence]
+> - *Leans toward A/B because [reason from codebase or RAD]*
+>
+> *(repeat for each tradeoff)*
+>
+> Which options are you leaning toward?
+
+Wait for the user's response. Merge all corrections, additions, and tradeoff decisions before proceeding to Step 5. Record each chosen option — it will inform the Technical Breakdown.
 
 ---
 
@@ -105,7 +133,7 @@ Follow `OUTPUT_TEMPLATE.md`. Key rules:
 - **Scope** — in scope and out of scope lists.
 - **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
 - **RAD** — every item cites its source (PRD, Transcript, or User).
-- **Technical Breakdown** — one section per repo, specific files/areas, one-line rationale each.
+- **Technical Breakdown** — one section per repo, specific files/areas, one-line rationale each. Open with a "Design decisions" line per repo noting which tradeoff option was chosen and why.
 - **Cross-repo map** — only if `--root`.
 - **Engineer Updates** — empty table, leave for the team.
 
