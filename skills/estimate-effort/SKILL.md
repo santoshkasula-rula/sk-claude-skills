@@ -128,9 +128,9 @@ If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 ---
 
-## Step 6 — Write TECHNICAL_DESIGN.md
+## Step 6 — Write output file
 
-Write to `TECHNICAL_DESIGN.md` in the current directory. Follow `OUTPUT_TEMPLATE.md`. Key rules:
+Write to `Effort Breakdown Analysis - [Project Name].md` in the current directory, using the actual project name extracted from the documents. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
 - **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), success criteria, risk summary (one sentence if any 🔴 milestone), assumptions (key assumptions the estimate depends on), and dependencies (hard blockers that could shift the plan).
 - **Scope** — in scope and out of scope lists.

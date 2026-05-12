@@ -1,4 +1,4 @@
-# Technical Design: [Project Name]
+# Effort Breakdown Analysis - [Project Name]
 
 **Date:** [Today's Date]
 **Status:** Draft — Awaiting Engineer Sign-off
