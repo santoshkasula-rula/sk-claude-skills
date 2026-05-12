@@ -4,64 +4,6 @@
 **Date:** [Today's Date]
 **Status:** Draft — Awaiting team review
 
----
-
-## Jira Import Data
-
-> Structured data for `/jira-import`. Do not edit manually — update the markdown sections below and regenerate.
-
-```yaml
-project: "[Project Name]"
-generated: "[Today's Date]"
-epics:
-  - id: "E1"
-    name: "[Milestone Name]"
-    goal: "[Business value — exact language from Effort Breakdown Analysis]"
-    risk: "high | medium | low"
-    labels: ["[milestone-slug]"]
-    stories:
-      - id: "1.1"
-        title: "[Action-language story title]"
-        type: "Engineering | Operational | Rollout"
-        repo: "[repo-name]"
-        effort_days: 0
-        demo_scenario: "[What the engineer shows on Friday]"
-        done_when: "[Acceptance criterion]"
-        rad_flag: null
-        labels: ["[type-slug]", "[repo-slug]"]
-      - id: "1.2"
-        title: "[Action-language story title]"
-        type: "Engineering | Operational | Rollout"
-        repo: "[repo-name]"
-        effort_days: 0
-        demo_scenario: "[What the engineer shows on Friday]"
-        done_when: "[Acceptance criterion]"
-        rad_flag: "[RAD item name]"
-        labels: ["[type-slug]", "[repo-slug]"]
-  - id: "E2"
-    name: "[Milestone Name]"
-    goal: "[Business value]"
-    risk: "high | medium | low"
-    labels: ["[milestone-slug]"]
-    stories:
-      - id: "2.1"
-        title: "[Action-language story title]"
-        type: "Engineering | Operational | Rollout"
-        repo: "[repo-name]"
-        effort_days: 0
-        demo_scenario: "[Demo scenario]"
-        done_when: "[Done when]"
-        rad_flag: null
-        labels: ["[type-slug]", "[repo-slug]"]
-totals:
-  engineering_days: 0
-  operational_days: 0
-  rollout_days: 0
-  total_days: 0
-```
-
----
-
 ## Summary
 
 | | |
