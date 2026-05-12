@@ -22,6 +22,12 @@
 | **Rollout Effort** | [X days — QA, testing cycles, feature flag ramp, stakeholder demo, incremental rollout] |
 | **Total Effort** | [Sum of all three buckets, buffered Engineering + actual Operational + actual Rollout] |
 | **Risk Summary** | [e.g. "One milestone carries high risk due to legacy auth layer — see RAD section." or "No high-risk milestones identified."] |
+| **RAD Summary** | |
+
+> **Risks:** [Most significant risk in one sentence — e.g. "Legacy auth layer has no test coverage and is the least understood part of the system."]
+> **Assumptions:** [Key assumption the estimate depends on — e.g. "Staging environment access is available to all engineers from day one."]
+> **Dependencies:** [Hard dependency that could shift the plan — e.g. "Payment service schema migration must complete before M2 can start."]
+> *See RAD Analysis section for the full breakdown.*
 
 ---
 
