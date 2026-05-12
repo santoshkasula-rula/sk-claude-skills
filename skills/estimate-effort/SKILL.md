@@ -125,9 +125,9 @@ If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 ---
 
-## Step 6 — Write IMPLEMENTATION_PLAN.md
+## Step 6 — Write TECHNICAL_DESIGN.md
 
-Follow `OUTPUT_TEMPLATE.md`. Key rules:
+Write to `TECHNICAL_DESIGN.md` in the current directory. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
 - **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), risk callout if any 🔴, success criteria.
 - **Scope** — in scope and out of scope lists.

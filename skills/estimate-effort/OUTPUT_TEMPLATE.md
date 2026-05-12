@@ -1,4 +1,4 @@
-# Implementation Plan: [Project Name]
+# Technical Design: [Project Name]
 
 **Date:** [Today's Date]
 **Status:** Draft — Awaiting Engineer Sign-off
