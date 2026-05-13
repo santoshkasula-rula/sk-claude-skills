@@ -33,6 +33,39 @@ Identify each service and any cross-repo shared dependencies.
 
 ---
 
+## Step 2b — Dependency discovery (always)
+
+Detect whether the skill is running inside a real repo:
+
+```bash
+git rev-parse --show-toplevel 2>/dev/null && basename $(git rev-parse --show-toplevel)
+```
+
+If inside a repo, read the relevant dependency manifest(s) — use only what exists:
+
+- `package.json` → `dependencies` + `devDependencies` keys, plus any `workspaces`
+- `go.mod` → `require` block
+- `docker-compose.yml` / `docker-compose.yaml` → `services` keys
+- `requirements.txt` or `pyproject.toml` → top-level package names
+
+From this, extract a candidate list of **upstream and downstream services** — things that look like internal services, not third-party libraries. Signals: org-scoped packages (`@company/...`), service names matching repo naming conventions, docker-compose service names, local `replace` directives in go.mod.
+
+Present the list and ask the engineer to confirm scope — in one message, concisely:
+
+> **I found these services/dependencies in this repo — which ones will need changes for this project?**
+>
+> - `[service-name]` — [one-line description of what it does, inferred from name or manifest]
+> - `[service-name]` — [...]
+> - *(none that look internal — I'll ask you directly in the RAD step)*
+>
+> Check any that apply, or just list them. I'll include them in the Technical Breakdown.
+
+Wait for the response. Record confirmed dependent services — they seed the Technical Breakdown sections and the RAD dependencies list.
+
+If not inside a repo (no git root found): skip this step silently.
+
+---
+
 ## Step 3 — Extract signals
 
 **From all documents**, extract and record. Use the exact terminology, feature names, and system names as they appear in the documents — do not rename or generalize them.
@@ -67,7 +100,7 @@ Then add 2–3 targeted questions based on what's genuinely missing or uncertain
 - If risks are thin or anxiety markers appeared on a specific component: *"What's the trickiest part of this — what would make it take twice as long?"* or *"You mentioned [X] is tricky — what makes it hard and have you touched it before?"*
 - If assumptions are thin: *"What has to be true for this estimate to hold?"*
 - If dependencies are sparse or service boundaries are unclear: *"Who or what outside your team needs to cooperate for this to ship?"*
-- **Always ask about dependent repos/services** unless the documents already enumerate which services need changes: *"Which other repos or services will need changes — even small ones like config updates, contract changes, or new API calls?"* — use the answer to populate the Technical Breakdown and flag cross-service sequencing risks.
+- **If Step 2b found no internal services or was skipped**, ask: *"Which other repos or services will need changes — even small ones like config updates, contract changes, or new API calls?"* — use the answer to populate the Technical Breakdown and flag cross-service sequencing risks. Skip this if Step 2b already produced a confirmed list.
 - If scope feels ambiguous: *"What's adjacent to this that someone might assume is included?"*
 - If there's a new system, integration, or unfamiliar area: *"Has your team built something like [X] before, or is this new ground?"*
 - **Always include one design/tradeoff probe** unless the documents already describe the implementation approach in detail: *"Have you thought through how you'd approach [key technical decision]? Any alternatives you're weighing or already ruled out?"* — tailor [key technical decision] to the most significant architectural or design choice implied by the scope (e.g. sync vs async, new service vs extending existing, client-side vs server-side logic, migration strategy).
