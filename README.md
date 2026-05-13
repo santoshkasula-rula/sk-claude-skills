@@ -21,3 +21,4 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 |-------|-------------|
 | [estimate-effort](skills/estimate-effort/SKILL.md) | Thought-partner for engineers — collects PRDs and transcripts, probes for unstated risks, design tradeoffs, and assumptions via targeted questions, then generates a PM-readable implementation plan with RAD |
 | [epic-story-builder](skills/epic-story-builder/SKILL.md) | Turns an Effort Breakdown Analysis into weekly-demo-sized Epics and Stories for Jira |
+| [llm-assisted-effort-estimate](skills/llm-assisted-effort-estimate/SKILL.md) | Cloned from estimate-effort — thought-partner for engineers with RAD probing, dependency discovery, and design tradeoffs |
