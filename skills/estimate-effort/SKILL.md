@@ -66,13 +66,14 @@ Then add 2–3 targeted questions based on what's genuinely missing or uncertain
 
 - If risks are thin or anxiety markers appeared on a specific component: *"What's the trickiest part of this — what would make it take twice as long?"* or *"You mentioned [X] is tricky — what makes it hard and have you touched it before?"*
 - If assumptions are thin: *"What has to be true for this estimate to hold?"*
-- If dependencies are sparse: *"Who or what outside your team needs to cooperate for this to ship?"*
+- If dependencies are sparse or service boundaries are unclear: *"Who or what outside your team needs to cooperate for this to ship?"*
+- **Always ask about dependent repos/services** unless the documents already enumerate which services need changes: *"Which other repos or services will need changes — even small ones like config updates, contract changes, or new API calls?"* — use the answer to populate the Technical Breakdown and flag cross-service sequencing risks.
 - If scope feels ambiguous: *"What's adjacent to this that someone might assume is included?"*
 - If there's a new system, integration, or unfamiliar area: *"Has your team built something like [X] before, or is this new ground?"*
 - **Always include one design/tradeoff probe** unless the documents already describe the implementation approach in detail: *"Have you thought through how you'd approach [key technical decision]? Any alternatives you're weighing or already ruled out?"* — tailor [key technical decision] to the most significant architectural or design choice implied by the scope (e.g. sync vs async, new service vs extending existing, client-side vs server-side logic, migration strategy).
 
 **Rules:**
-- Never ask more than 3 questions total.
+- Never ask more than 3 questions total. The dependent-repos question and the design/tradeoff probe are both "always ask" — if both apply and nothing else is missing, ask only those two.
 - Never re-ask for something the documents already answered.
 - Frame questions to help the engineer think, not just fill a form.
 - If the engineer describes a design approach, follow up with one challenge: *"What's the main risk with that approach?"* or *"Did you consider [obvious alternative] — what ruled it out?"* — then move on.
