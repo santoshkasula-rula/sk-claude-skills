@@ -1,6 +1,6 @@
 ---
 name: estimate-effort
-description: Generates a PM-readable, engineer-actionable implementation plan from a PRD and/or Zoom transcript. Extracts RAD from documents, then confirms gaps with the user before writing the plan.
+description: Guides engineers through effort estimation as a thought partner — collects documents, probes for unstated risks and assumptions via targeted RAD questions, then writes a PM-readable implementation plan.
 disable-model-invocation: true
 argument-hint: "[--root]"
 allowed-tools: Read Bash(find *) Bash(ls *) Write
@@ -42,7 +42,7 @@ Identify each service and any cross-repo shared dependencies.
 | Project name, objective, success metrics | PRD |
 | Features in scope, features explicitly out of scope | PRD |
 | Technical components mentioned | Transcript / docs |
-| Risks detected — anxiety markers: *"worried about"*, *"legacy"*, *"not sure how long"*, *"tricky"*, *"depends on"*, *"blocked by"*, *"never touched"* | Transcript / docs |
+| Risks — anxiety markers: *"worried about"*, *"legacy"*, *"not sure how long"*, *"tricky"*, *"depends on"*, *"blocked by"*, *"never touched"* | Transcript / docs |
 | Named blockers, external dependencies, open questions | Transcript / docs |
 | Assumptions stated or implied | All sources |
 
@@ -50,59 +50,73 @@ Identify each service and any cross-repo shared dependencies.
 
 ---
 
-## Step 4 — RAD confirmation
+## Step 4 — RAD thought-partner
 
-Send the pre-filled RAD draft and ask about tradeoff analysis in one message. Only surface gaps — do not re-ask for things already confirmed in the documents.
+Documents capture what was written down. This step surfaces what wasn't. Send one message that pre-fills what you found and asks 2–3 targeted questions to probe for gaps.
 
-> **Here's what I found — correct or add anything:**
+> **Here's what I found — correct anything, then I have a few questions:**
 >
-> Risks: [list with source] — *anything missing?*
-> Assumptions: [list with source] — *anything missing?*
-> Dependencies: [list with source] — *anything missing?*
-> Out of scope: [extracted, or "not found — what should be excluded?"]
-> Success criteria: [extracted, or "how will you know this is done?"]
->
-> ---
-> **Run tradeoff analysis?** (default: no)
-> Scans the codebase for design patterns and surfaces 2–4 decisions you'll need to make before implementation. Takes a few extra minutes.
-> - **Yes** — full codebase scan, grounded tradeoff options
-> - **No** — skip for now, you can add design notes manually
-> - Or paste your own design constraints/preferences and I'll factor them in.
+> **Risks:** [list with source, or "none found"]
+> **Assumptions:** [list with source, or "none found"]
+> **Dependencies:** [list with source, or "none found"]
+> **Out of scope:** [list, or "not explicit — what should be excluded?"]
+> **Success criteria:** [list, or "not stated — how will you know this is done?"]
 
-Wait for the user's response before continuing.
+Then add 2–3 targeted questions based on what's genuinely missing or uncertain. Pick from the set below — skip any where the documents already have a clear answer:
 
-- If **yes**: run Step 4b, then proceed to Step 5.
-- If **no** or no response on tradeoffs: proceed directly to Step 5. Skip Step 4b.
-- If the user pastes their own input: record it as design decisions, skip Step 4b, proceed to Step 5.
+- If risks are thin or anxiety markers appeared on a specific component: *"What's the trickiest part of this — what would make it take twice as long?"* or *"You mentioned [X] is tricky — what makes it hard and have you touched it before?"*
+- If assumptions are thin: *"What has to be true for this estimate to hold?"*
+- If dependencies are sparse: *"Who or what outside your team needs to cooperate for this to ship?"*
+- If scope feels ambiguous: *"What's adjacent to this that someone might assume is included?"*
+- If there's a new system, integration, or unfamiliar area: *"Has your team built something like [X] before, or is this new ground?"*
+- **Always include one design/tradeoff probe** unless the documents already describe the implementation approach in detail: *"Have you thought through how you'd approach [key technical decision]? Any alternatives you're weighing or already ruled out?"* — tailor [key technical decision] to the most significant architectural or design choice implied by the scope (e.g. sync vs async, new service vs extending existing, client-side vs server-side logic, migration strategy).
+
+**Rules:**
+- Never ask more than 3 questions total.
+- Never re-ask for something the documents already answered.
+- Frame questions to help the engineer think, not just fill a form.
+- If the engineer describes a design approach, follow up with one challenge: *"What's the main risk with that approach?"* or *"Did you consider [obvious alternative] — what ruled it out?"* — then move on.
+
+Wait for the user's response. Update RAD with anything new before continuing.
 
 ---
 
-## Step 4b — Codebase tradeoff analysis (only if user said yes)
+## Step 4b — Tradeoff analysis (opt-in)
 
-Scan the codebase to understand how things are currently built. Focus only on areas the PRD touches. Look for:
+After RAD is confirmed, ask once:
 
-- How similar features are structured (routing, layering, data access patterns)
-- How UI components interact with backend services (REST vs event-driven, polling vs push, shared state)
-- How existing cross-service calls are made (sync vs async, retry patterns, error handling)
-- Any tech debt signals near the areas this feature will touch
+> **Run tradeoff analysis?** (default: no)
+> Scans the codebase for design patterns and surfaces 2–4 decisions you'll need to make before implementation.
+> - **Yes** — full scan, grounded options
+> - **No / skip** — you can add design notes manually
+
+- If **yes**: scan the codebase (Step 4c), then proceed to Step 5.
+- If **no** or no response: proceed directly to Step 5.
+- If the user pastes design constraints: record them, skip scan, proceed to Step 5.
+
+---
+
+## Step 4c — Codebase tradeoff scan (only if yes)
+
+Scan areas the PRD touches. Look for:
+- How similar features are structured (routing, layering, data access)
+- How UI components interact with backend services
+- How existing cross-service calls are made (sync vs async, retry, error handling)
+- Tech debt signals near areas this feature will touch
 
 Use `find`, `ls`, and `Read` on key files. Do not scan exhaustively.
 
 Form 2–4 tradeoffs. Each must:
-- Be grounded in something observed in the codebase — not a generic best practice
+- Be grounded in something observed — not generic best practices
 - Present Option A / Option B with a one-line consequence each
 - Flag which option is safer given the RAD risks
 
 > **Design tradeoffs — your call:**
 >
 > *[Tradeoff 1 — what you observed, what the decision is]*
-> - **Option A:** [what it is] → [consequence]
-> - **Option B:** [what it is] → [consequence]
+> - **A:** [what it is] → [consequence]
+> - **B:** [what it is] → [consequence]
 > - *Leans toward A/B because [RAD risk or codebase reason]*
->
-> *(repeat for each tradeoff)*
->
-> Which options are you leaning toward?
 
 Wait for the user's response. Record each decision — it will inform the Technical Breakdown.
 
@@ -110,7 +124,7 @@ Wait for the user's response. Record each decision — it will inform the Techni
 
 ## Step 5 — Design milestones
 
-Create 3–5 milestones. Use the language from the documents — milestone names, deliverable descriptions, and business value statements must reflect the actual words, feature names, and goals used in the PRD, transcript, and any additional context provided. Do not substitute generic placeholders.
+Create 3–5 milestones. Use the language from the documents — names, deliverables, and business value must reflect the actual words and goals from the PRD, transcript, and context provided. Do not substitute generic placeholders.
 
 Each milestone must:
 - Deliver a concrete, demonstrable artifact
@@ -135,7 +149,7 @@ Write to `Effort Breakdown Analysis - [Project Name].md` in the current director
 - **Executive Summary** — plain language, no repo names, include: goal, effort totals (raw + buffered), success criteria, risk summary (one sentence if any 🔴 milestone), assumptions (key assumptions the estimate depends on), and dependencies (hard blockers that could shift the plan).
 - **Scope** — in scope and out of scope lists.
 - **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
-- **RAD** — every item cites its source (PRD, Transcript, or User).
+- **RAD** — every item cites its source (PRD, Transcript, or Engineer). Items added during the thought-partner conversation are sourced as "Engineer".
 - **Technical Breakdown** — one section per repo, specific files/areas, one-line rationale each. Open with a "Design decisions" line per repo noting which tradeoff option was chosen and why.
 - **Cross-repo map** — only if `--root`.
 - **Engineer Updates** — empty table, leave for the team.
