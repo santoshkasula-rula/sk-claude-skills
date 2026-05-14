@@ -1,6 +1,6 @@
 ---
 name: llm-assisted-effort-estimate
-description: Strategic engineering thought partner using HIE + RAD-E frameworks. Probes unknowns, scores confidence via PERT, surfaces delivery trade-offs, and produces a leadership-ready implementation report.
+description: Strategic engineering thought partner using HIE + RAD-E + PERT frameworks grounded in 2026 LLM-assisted estimation research. Audits context entropy, scores oversight multipliers per module risk, runs internal multi-agent debate for probabilistic ranges, and produces a leadership-ready implementation report.
 disable-model-invocation: true
 argument-hint: "[--root]"
 allowed-tools: Read Bash(find *) Bash(ls *) Write
@@ -9,15 +9,47 @@ allowed-tools: Read Bash(find *) Bash(ls *) Write
 # llm-assisted-effort-estimate
 
 Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}`.
-If `--root` is in $ARGUMENTS, enable multi-repo discovery in Step 2.
+If `--root` is in $ARGUMENTS, enable multi-repo discovery in Phase 1b.
 
 ---
 
 ## Frameworks
 
-- **HIE (Hybrid Intelligence Effort):** ~70% of effort is validation and integration, not code generation. Flag this whenever estimates feel low.
-- **RAD (Risks, Assumptions, Dependencies):** The primary lens for hidden costs and delivery surprises.
-- **PERT (Confidence-Based Estimation):** Each milestone gets Optimistic / Most Likely / Pessimistic estimates. Blended effort = `(O + 4M + P) / 6`. Never give a single-point estimate.
+### HIE — Hybrid Intelligence Effort
+LLMs have decoupled Construction Effort from Total Effort. ~78% of "high-complexity" tasks finish in 25% of expected time — but ~22% of "low-complexity" tasks take 180% longer due to validation and integration overhead. Never treat code generation speed as a proxy for delivery speed.
+
+**The five dimensions that drive real effort:**
+
+| Dimension | What to assess |
+| :--- | :--- |
+| **Reasoning Complexity** | Does this require cross-module integration or multi-step logic? More = more interaction/fix cycles. |
+| **Context Completeness** | Is all required knowledge explicit in documents, or ambient/undocumented? Gaps increase hallucination risk. |
+| **Transformation Impact** | How many existing dependencies change? Wide-reaching changes scale risk exponentially. |
+| **Verification Overhead** | High-risk modules (Auth, Payments, PII) require a 3:1 human oversight ratio — 3 hrs review per 1 hr build. |
+| **Iteration Cycles** | How many refinement loops before production-ready? Each loop is non-trivial. |
+
+### Oversight Multiplier (replaces flat % buffer)
+`Total Effort = Construction Time × Oversight Multiplier`
+
+| Module Risk Profile | Multiplier |
+| :--- | :--- |
+| Routine change, well-tested, no external deps | 1.5× |
+| New feature, moderate integration surface | 2.5× |
+| Complex cross-service or unfamiliar system | 3.5× |
+| Auth / Payments / PII / compliance-critical | 4.0–5.0× |
+
+Always show: Construction estimate + Multiplier applied + Total. Never embed the multiplier invisibly.
+
+### RAD-E — Risk, Assumptions, Dependencies (2026 KLRM focus)
+- **Risks** → flag **Behavioral Loss**: will the team understand this code in 6 months?
+- **Assumptions** → flag **Ecosystem Stability**: is the 3rd-party API/service this depends on stable?
+- **Dependencies** → flag **Human Bottlenecks**: who is the single person who must approve or unblock this?
+
+### PERT — Probabilistic Estimation
+O/M/P estimates generated via internal multi-agent debate (see Phase 4). Blended = `(O + 4M + P) / 6`. Express confidence as: *"70% chance of [M] days, 95% chance of [P] days."* Never give a single-point estimate.
+
+### 1-Hour Spike Rule
+If any RAD item is marked **High Impact / Low Confidence**: do not estimate that milestone. Instead, recommend a 1-hour time-boxed spike to resolve the unknown before locking numbers.
 
 ---
 
@@ -67,9 +99,11 @@ If no git root found: skip silently.
 
 ---
 
-## Phase 2 — Extract signals
+## Phase 2 — Extract signals + Information Entropy audit
 
-From all documents, extract and record using the exact terminology from the source materials:
+From all documents, extract and record using the exact terminology from the source materials.
+
+**Standard signals:**
 
 | Signal | Source |
 | :--- | :--- |
@@ -82,13 +116,25 @@ From all documents, extract and record using the exact terminology from the sour
 
 **Conflict rule:** Transcript anxiety markers override PRD optimism on the same component — always.
 
+**Information Entropy audit** — after extracting signals, score each of the five HIE dimensions:
+
+| Dimension | Score: Complete / Partial / Missing |
+| :--- | :--- |
+| Reasoning Complexity | [assess from PRD scope] |
+| Context Completeness | [flag any ambient/undocumented knowledge gaps] |
+| Transformation Impact | [assess from known service dependencies] |
+| Verification Overhead | [identify Auth/Payments/PII/compliance touch points] |
+| Iteration Cycles | [flag unknowns that imply rework loops] |
+
+Any dimension scored **Missing** is a required question in Phase 3. Any component touching Auth, Payments, or PII automatically gets a 4.0× Oversight Multiplier flag.
+
 ---
 
 ## Phase 3 — Strategic Probe
 
-Documents capture what was written. This step surfaces what wasn't, and forces the engineer to think about failure modes and alternatives.
+Documents capture what was written. This step closes information entropy gaps and surfaces failure modes, behavioral loss, and human bottlenecks.
 
-Present the pre-filled RAD draft and 3 targeted questions in one message:
+Present the pre-filled RAD draft and exactly 3 targeted questions in one message:
 
 > **Here's what I extracted — correct anything:**
 >
@@ -104,21 +150,25 @@ Present the pre-filled RAD draft and 3 targeted questions in one message:
 > 2. [Question B]
 > 3. [Question C]
 
-Pick the 3 most valuable from this set — never ask all of them, and never re-ask what documents already answered:
+**Question bank — pick the 3 most valuable, prioritizing entropy gaps from Phase 2:**
 
-- **Simpler path:** *"Is there a simpler way to achieve the core business goal — what's the minimum that would unlock value?"*
+- **Legacy constraints (Context Completeness gap):** *"What constraints or decisions are NOT in this PRD — undocumented APIs, tribal knowledge, historical hacks?"*
+- **Behavioral loss (Risks — KLRM):** *"Will the team understand this code in 6 months — is there a knowledge owner for the area being modified, or could it become a black box?"*
+- **Bus factor (Dependencies — KLRM):** *"Who is the one person whose approval or knowledge is required to ship this — and are they available?"*
 - **Failure mode:** *"What happens when this fails in production — who gets paged and what breaks downstream?"*
-- **Trickiest part:** *"What's the part most likely to take twice as long — and has your team touched it before?"*
-- **Assumptions:** *"What has to be true for this estimate to hold?"*
+- **Simpler path:** *"Is there a simpler way to hit the core business goal — what's the minimum that would unlock value?"*
+- **Ecosystem stability (Assumptions — KLRM):** *"How stable are the external APIs or services this depends on — any recent breaking changes or deprecations?"*
+- **Trickiest part:** *"What's most likely to take twice as long — and has your team touched it before?"*
 - **Dependent services (if Phase 1c found nothing):** *"Which other repos or services need changes — even small ones like config or contract updates?"*
-- **External blockers:** *"Who or what outside your team needs to cooperate, and do they know?"*
-- **Design approach:** *"How are you thinking about [key architectural decision — e.g. sync vs async, new service vs extending existing]? Any alternatives you ruled out?"*
+- **Design approach:** *"How are you thinking about [key architectural decision]? Any alternatives you've ruled out?"*
 
 **Rules:**
 - Exactly 3 questions — no more, no fewer.
+- Always prioritize questions that close **Missing** entropy dimensions from Phase 2.
+- Never re-ask something the documents already answered.
 - If the engineer describes a design approach, challenge it once: *"What's the main risk with that? Did you consider [alternative]?"* then move on.
 
-Wait for response. Update RAD before continuing.
+Wait for response. Update RAD and entropy scores before continuing.
 
 ---
 
@@ -141,68 +191,90 @@ After RAD is confirmed, ask once:
 Use `find`, `ls`, and `Read` on key files. Focus on areas the PRD touches. Look for:
 - How similar features are structured (routing, layering, data access)
 - How cross-service calls are made (sync vs async, retry, error handling)
-- Tech debt signals near the areas this feature will touch
+- Tech debt signals and behavioral loss indicators near the areas this feature will touch
 
-Form 2–4 tradeoffs. Each must be grounded in something observed — not generic best practice — and present Option A / Option B with one-line consequences, flagging which is safer given the RAD risks.
+Form 2–4 tradeoffs. Each must be grounded in something observed — not generic best practice — and present Option A / Option B with one-line consequences, flagging which is safer given the RAD risks and Oversight Multiplier implications.
 
 > **Design tradeoffs — your call:**
 >
 > *[What you observed, what the decision is]*
-> - **A:** [option] → [consequence]
-> - **B:** [option] → [consequence]
+> - **A:** [option] → [consequence] *(Multiplier implication: [e.g. "keeps multiplier at 2.5×"])*
+> - **B:** [option] → [consequence] *(Multiplier implication: [e.g. "pushes multiplier to 4.0× — touches auth layer"])*
 > - *Leans toward A/B because [RAD risk or codebase reason]*
 
-Wait for response. Record decisions — they inform the Technical Breakdown.
+Wait for response. Record decisions — they inform the Technical Breakdown and Oversight Multipliers.
 
 ---
 
-## Phase 4 — PERT scoring + delivery paths
+## Phase 4 — Internal multi-agent debate + scoring
 
-Compute two things before writing milestones.
+Before presenting anything to the engineer, internally run two estimation personas:
+
+**The AI-Accelerationist** — assumes: full context, no blockers, LLM handles complexity, experienced team.
+- Produces the **Optimistic (O)** estimate per milestone.
+
+**The Skeptical SRE** — assumes: hidden legacy constraints, integration surprises, 3:1 oversight on risky modules, rework cycles, human bottlenecks cause waiting time.
+- Produces the **Pessimistic (P)** estimate per milestone.
+
+Use these two to anchor O and P. Set M based on the RAD completeness and entropy scores. Compute blended = `(O + 4M + P) / 6`.
+
+**Express delivery confidence as:** *"70% chance of [M] days, 95% chance of [P] days."*
+
+### 1-Hour Spike Rule check
+
+Before presenting delivery paths, scan all RAD items. For any item where **Impact = High AND Confidence = Low**:
+
+> ⚠️ **Spike required before estimating [milestone]:**
+> *"[RAD item] is high-impact and unresolved. A 1-hour spike to [specific action] must happen before this milestone's estimate can be locked. Proceeding without it makes [M] unreliable."*
+
+Flag it in the Leadership Dashboard as 🔴 and do not assign a milestone blended estimate — mark it `TBD — spike first`.
 
 ### Confidence Score
 
-Score the estimate 1–10 based on information quality:
+Score 1–10 based on information quality after the probe:
 
 | Factor | Deduct |
 | :--- | :--- |
 | No transcript or meeting notes | −1 |
 | Thin PRD (missing success criteria or scope) | −1 |
-| Each 🔴 risk identified | −0.5 |
-| Unfamiliar system or new integration | −1 |
+| Each HIE dimension still scored Missing after probe | −0.5 |
+| Each 🔴 RAD risk | −0.5 |
+| Auth/Payments/PII module touched (high Verification Overhead) | −1 |
 | External dependency with no confirmed timeline | −1 |
-| Each major open question left unanswered | −0.5 |
+| Bus factor risk (one person who must approve — availability unknown) | −0.5 |
 
-Start at 9. Floor at 3. Show score and the top reason it isn't higher.
+Start at 9. Floor at 3. Show score and the top 1–2 reasons it isn't higher.
 
 ### Delivery trade-offs
 
-Present two paths and ask the PM/engineer to choose before milestones are written:
+Present two paths before milestones are written:
 
 > **Two delivery paths — which fits the business situation?**
 >
 > **Option A — Fastest Path (MVP)**
 > Scope: [what's cut or deferred]
-> Timeline: [PERT blended estimate]
-> Trade-off: [specific tech debt or risk accepted]
+> Estimate: [blended PERT] — 70% at [M], 95% at [P]
+> Oversight Multiplier applied: [e.g. "2.5× — integration surface is moderate"]
+> Trade-off accepted: [specific tech debt, behavioral loss, or validation shortcut]
 >
-> **Option B — Robust Path**
+> **Option B — Robust Path** *(default)*
 > Scope: [full feature + hardening]
-> Timeline: [PERT blended estimate — longer]
-> Trade-off: [what takes longer and why it matters]
+> Estimate: [blended PERT — longer] — 70% at [M], 95% at [P]
+> Oversight Multiplier applied: [e.g. "3.5× — full integration hardening"]
+> Trade-off accepted: [longer timeline, but lower behavioral loss and regression risk]
 >
 > Default is B unless there's a hard deadline or explicit PM preference for A.
 
-Wait for response. Record the chosen path — it shapes milestone scope and sequencing.
+Wait for response. Record chosen path — it shapes milestone scope, multipliers, and sequencing.
 
 ---
 
 ## Phase 5 — Milestones
 
-Structure milestones in three phases. Use language from the documents — names and deliverables must reflect the actual words and goals from the PRD, transcript, and context. No generic placeholders.
+Structure milestones in three phases. Names and deliverables must use language from the documents. No generic placeholders.
 
 **Phase structure:**
-- **Validation Spike** — eliminate the biggest RAD unknown before committing to the full estimate
+- **Validation Spike** — eliminate the biggest RAD unknown (or resolve any 1-Hour Spike Rule flags) before committing to the build estimate
 - **Core Build** — feature-complete against the chosen delivery path
 - **Launch Readiness** — QA, zero-regression hardening, rollout
 
@@ -210,15 +282,14 @@ Each milestone must:
 - Deliver a concrete, demonstrable artifact
 - Be sequenced so each unblocks the next
 - Show PERT effort: Optimistic / Most Likely / Pessimistic → blended `(O + 4M + P) / 6`
+- Show Construction estimate, Oversight Multiplier, and Total separately
 - Break effort into three buckets (never combine):
   - **Engineering** — coding, design, code review
   - **Operational** — deployment, infra, config, secrets
   - **Rollout** — QA, testing, feature flag ramp, stakeholder demo
 - Carry a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
 
-**Buffer:** 20% added to Engineering total only. Show raw + buffered separately. Never embed inside milestones.
-
-**HIE note:** If Engineering effort across all milestones feels low relative to the complexity, flag it: *"~70% of the effort here is in validation and integration — the code generation is the smaller part."*
+**If a milestone has a Spike Rule flag:** mark it `🔴 TBD — spike first` and show the spike as its own M0 milestone.
 
 If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
@@ -228,12 +299,12 @@ If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 Write to `Implementation Report - [Project Name].md` in the current directory. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
-- **Leadership Dashboard** — Project Health (🟢/🟡/🔴), Confidence Score (X/10 with reason), Blended PERT total.
-- **Executive Summary** — business goal, effort totals (raw + buffered), success criteria, one-sentence risk summary, key assumptions, hard dependencies.
-- **Delivery Trade-offs** — the two paths and which was chosen, with rationale.
-- **RAD Dashboard** — every item has Impact on Delivery (High/Med/Low) and a concrete Mitigation/Action Item. Source every item (PRD, Transcript, Engineer, Probe).
-- **Milestones** — PERT columns (O/M/P + blended), Engineering / Operational / Rollout, risk flag.
-- **Technical Breakdown** — one section per repo, specific files/areas, one-line rationale. Open each section with the Design Decision chosen and why.
+- **Leadership Dashboard** — Project Health, Confidence Score (X/10 with top reasons), blended PERT total with probabilistic confidence ranges, delivery path chosen.
+- **Executive Summary** — business goal, effort totals with Oversight Multipliers shown, success criteria, one-sentence risk summary, key assumptions, hard dependencies.
+- **Delivery Trade-offs** — both paths with multipliers, which was chosen and why.
+- **RAD Dashboard** — every item has: Impact, Confidence (High/Low), Source, Mitigation/Action Item, Knowledge Owner. Behavioral Loss and Ecosystem Stability risks called out explicitly.
+- **Milestones** — PERT columns (O/M/P + blended), probabilistic confidence line, Construction + Multiplier + Total, Engineering / Operational / Rollout, risk flag. Any Spike Rule items shown as M0.
+- **Technical Breakdown** — one section per repo, specific files/areas, rationale, design decision chosen, Oversight Multiplier for each area.
 - **Cross-repo map** — only if `--root`.
 - **Engineer Updates** — empty table, leave for the team.
 
