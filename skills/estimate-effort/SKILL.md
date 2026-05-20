@@ -17,7 +17,7 @@ If `--root` is in $ARGUMENTS, enable multi-repo discovery in Step 2.
 
 Ask for each file in sequence. Read it before asking for the next.
 
-1. **PRD** — "Path to your PRD?" — required, re-ask if unreadable.
+1. **PRD** — "Path to your PRD, or paste the contents directly?" — required, re-ask if unreadable. If a path is given, read the file. If contents are pasted, use them directly.
 2. **Transcript** — "Zoom transcript or meeting notes? (path or skip)" — if provided, normalize it: strip timestamps, speaker labels, `[inaudible]`, and merge fragmented turns into prose.
 3. **Additional context** — "Any other files? (architecture docs, API specs, prior plans — path or done)" — repeat until 'done'.
 
