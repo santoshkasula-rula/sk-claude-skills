@@ -15,7 +15,7 @@
 | **Project Health** | 🟢 On Track / 🟡 At Risk / 🔴 High Uncertainty |
 | **Confidence Score** | [X/10] — *[Top 1–2 reasons it isn't higher — e.g. "Bus factor risk unresolved; external API stability unconfirmed"]* |
 | **Blended Effort (PERT)** | **[X days]** — *70% chance: [M] days · 95% chance: [P] days* |
-| **Delivery Path Chosen** | Option A (Fastest MVP) / Option B (Robust) |
+| **Chosen Approach** | [Solution name — one sentence] |
 | **Spike Required?** | Yes — see M0 / No |
 
 ---
@@ -24,20 +24,21 @@
 
 > Written for PMs and senior leadership. No repo names. No technical jargon.
 
-[1–2 sentences: what is being built and why it matters to the business.]
+[1–2 sentences: what is being built, why it matters to the business, and which solution was chosen.]
 
 | | |
 | :--- | :--- |
 | **Business Goal** | [e.g. Reduce checkout drop-off by 15%] |
-| **Success Criteria** | [How we'll know this is done — e.g. "Checkout completion rate ≥ 85% in staging load test"] |
+| **Chosen Approach** | [Solution name — one sentence on what it is] |
+| **Success Criteria** | [How we'll know this is done] |
 | **Business Systems Affected** | [Plain-language names — e.g. Checkout Flow, Payment Processing] |
 | **Construction Effort** | [X days — raw LLM-assisted build time] |
-| **Oversight Multiplier** | [e.g. 3.5× — cross-service integration + one high-risk auth module at 4.0×] |
+| **Oversight Multiplier** | [e.g. 3.5× — cross-service integration + auth module at 4.0×] |
 | **Total Engineering Effort** | [Construction × Multiplier → blended PERT days] |
 | **Operational Effort** | [X days — deployment, infra, config, secrets] |
 | **Rollout Effort** | [X days — QA, testing, feature flag ramp, stakeholder demo] |
 | **Total Effort** | [Engineering + Operational + Rollout] |
-| **Risk Summary** | [e.g. "One milestone blocked pending spike on legacy auth layer — estimate locked only after spike completes."] |
+| **Risk Summary** | [e.g. "One milestone blocked pending spike on legacy auth layer."] |
 | **Key Assumptions** | [e.g. "Staging access available; v2 payments endpoint is idempotent"] |
 | **Hard Dependencies** | [e.g. "Payment service schema migration must complete before M2"] |
 
@@ -45,79 +46,151 @@
 
 ---
 
-## Delivery Trade-offs
+## Requirements
 
-> PM's choice. Both paths are valid — pick the one that fits the business situation.
+> The agreed-upon problem definition. Locked before solutions were evaluated.
 
-### Option A — Fastest Path (MVP)
+### Use Cases
 
-**What's included:** [scope]
-**What's deferred:** [what's cut and when it can be picked up]
-**Blended estimate:** [X days] — *70% at [M] days, 95% at [P] days*
-**Oversight Multiplier:** [e.g. 2.5× — reduced integration surface]
-**Trade-off accepted:** [specific tech debt, behavioral loss risk, or validation shortcut — be concrete]
+| Actor | Action | Goal |
+| :--- | :--- | :--- |
+| [e.g. Logged-in user] | [e.g. Saves payment method at checkout] | [e.g. Faster repeat purchases] |
 
-### Option B — Robust Path *(default)*
+### User Stories
 
-**What's included:** [full scope + hardening]
-**Blended estimate:** [X days] — *70% at [M] days, 95% at [P] days*
-**Oversight Multiplier:** [e.g. 3.5× — full integration hardening]
-**Trade-off accepted:** [longer timeline; lower behavioral loss and regression risk long-term]
+- As a [role], I want to [action] so that [outcome].
 
-**Chosen:** Option [A/B] — *[one sentence: why this path fits the current business situation]*
+### Acceptance Criteria
+
+- [ ] [Specific, testable condition]
+- [ ] [...]
+
+### Success Metrics
+
+- [Measurable outcome — e.g. "Checkout completion rate ≥ 85% in staging load test"]
+
+### Constraints
+
+- [Non-negotiable — e.g. "Must not store raw card data — tokenization only"]
+
+### Scope
+
+**In scope:**
+- [Feature or capability included in this phase]
+
+**Out of scope:**
+- [Adjacent thing explicitly excluded — e.g. "Admin reporting dashboard (Phase 2)"]
 
 ---
 
-## Scope
+## Solution Options
 
-### In Scope
-- [Feature or capability included in this phase]
+> Each option is a distinct functional design. The chosen approach is marked.
 
-### Out of Scope
-- [Adjacent thing explicitly excluded — e.g. "Admin reporting dashboard (Phase 2)"]
+### Option A — [Name] ✅ *(Chosen)*
+
+[2–3 sentences: what this solution does and how it addresses the requirements.]
+
+**Repo / service impact:**
+- `[repo/service]` — [what changes]
+
+**Oversight Multiplier:** [e.g. 2.5× — moderate integration surface]
+**Key trade-off:** [The main thing accepted with this approach]
+
+---
+
+### Option B — [Name]
+
+[2–3 sentences: what this solution does and how it addresses the requirements.]
+
+**Repo / service impact:**
+- `[repo/service]` — [what changes]
+
+**Oversight Multiplier:** [e.g. 4.0× — touches auth layer]
+**Key trade-off:** [The main thing accepted with this approach]
+
+---
+
+### Option C — [Name] *(if applicable)*
+
+[Description]
+
+**Repo / service impact:**
+- `[repo/service]` — [what changes]
+
+**Oversight Multiplier:** [e.g. 3.5×]
+**Key trade-off:** [The main thing accepted]
 
 ---
 
 ## RAD Dashboard
 
-> Leadership focus: every item shows impact, confidence level, and a concrete action item. Behavioral Loss and Ecosystem Stability risks are called out explicitly.
+> Leadership focus: every item shows impact, confidence, and a concrete action item. Behavioral Loss and Ecosystem Stability called out explicitly.
 
 ### Risks
 
-| Risk | Type | Impact | Confidence | Source | Affected Milestone | Mitigation / Action Item | Knowledge Owner |
-| :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| [e.g. "Legacy auth layer has no test coverage"] | Behavioral Loss / Technical / Ecosystem | High / Med / Low | High / Low | Transcript / PRD / Probe | M[N] | [e.g. "Spike 1 day before locking M1. Owner: [name]"] | [who owns this area] |
+| Risk | Type | Impact | Confidence | Source | Solution(s) Affected | Affected Milestone | Mitigation / Action Item | Knowledge Owner |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
+| [e.g. "Legacy auth layer has no test coverage"] | Behavioral Loss / Technical / Ecosystem | High / Med / Low | High / Low | Transcript / PRD / Probe | A / B / All | M[N] | [e.g. "Spike 1 day before locking M1. Owner: [name]"] | [who owns this area] |
 
 ### Assumptions
 
-| Assumption | Type | Impact | Confidence | Source | Owner | Must be confirmed by |
-| :--- | :---: | :---: | :---: | :---: | :--- | :--- |
-| [e.g. "v2 payments API is stable — no breaking changes planned"] | Ecosystem Stability | High / Med / Low | High / Low | Probe | Platform team | Before M1 start |
+| Assumption | Type | Impact | Confidence | Source | Solution(s) Affected | Owner | Must be confirmed by |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
+| [e.g. "v2 payments API is stable"] | Ecosystem Stability | High / Med / Low | High / Low | Probe | All | Platform team | Before M1 start |
 
 ### Dependencies
 
-| Dependency | Type | Impact | Source | Blocks | Status | Human Bottleneck |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- |
-| [e.g. `billing-engine` schema migration] | Internal | Critical / Minor | Transcript | M2 | Waiting | [name — the one person who must approve] |
-| [e.g. Stripe API key rotation] | External | Critical / Minor | Probe | M3 | Pending | [name] |
+| Dependency | Type | Impact | Source | Solution(s) Affected | Blocks | Status | Human Bottleneck |
+| :--- | :---: | :---: | :---: | :---: | :--- | :--- | :--- |
+| [e.g. `billing-engine` schema migration] | Internal | Critical / Minor | Transcript | A, B | M2 | Waiting | [name — the one person who must approve] |
+| [e.g. Stripe API key rotation] | External | Critical / Minor | Probe | A | M3 | Pending | [name] |
 
 ### Out of Scope (confirmed)
 
-- [Item and rationale — e.g. "Admin dashboard: separate backlog item, no dependency on this work"]
+- [Item and rationale]
+
+---
+
+## Tradeoff Matrix
+
+> Comparison of all solution options. Grounded in the specific requirements, risks, and repo impacts identified — not a generic pros/cons list.
+
+| | [Option A] | [Option B] | [Option C] |
+| :--- | :--- | :--- | :--- |
+| **Effort (blended PERT)** | [estimate + confidence range] | ... | ... |
+| **Oversight Multiplier** | [e.g. 2.5×] | ... | ... |
+| **Risk exposure** | [RAD items inherited] | ... | ... |
+| **Blast radius** | [narrow/moderate/broad] | ... | ... |
+| **Covers all requirements** | Yes / Partially — [gap] | ... | ... |
+| **Future-you will thank you?** | [maintainability signal] | ... | ... |
+| **The thing you give up** | [key trade-off] | ... | ... |
+
+[2–3 sentences of narrative: team familiarity, reversibility, sequencing landmines.]
+
+---
+
+## Recommendation
+
+**Chosen approach: [Option Name]**
+
+[2–3 sentences: why this option wins given requirements, constraints, risks, and team context. Name the trade-off accepted without apologizing for it.]
+
+**The honest risk:** [One sentence about what could still bite us.]
 
 ---
 
 ## Milestones
 
-> Three phases: Validate the biggest unknown → Build → Launch. Sequenced so each unblocks the next.
+> For the chosen solution. Three phases: Validate the biggest unknown → Build → Launch.
 > Construction × Oversight Multiplier = Total Engineering per milestone.
 
-| # | Phase | Milestone | Deliverable | O | M | P | Blended | Confidence | Construction | Multiplier | Engineering | Operational | Rollout | Risk |
-| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| M0 | Spike | [Name — only if Spike Rule triggered] | [e.g. "Spike report: legacy auth risk is/isn't a blocker — estimate unlocked or revised"] | — | — | — | 1 day | — | 1 day | 1.0× | 1 day | — | — | 🔴 |
-| M1 | Validation | [Name] | [Concrete artifact] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 2.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
-| M2 | Core Build | [Name] | [Concrete artifact — e.g. "Feature-complete behind flag, passing integration tests"] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 3.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
-| M3 | Launch Readiness | [Name] | [Concrete artifact — e.g. "Zero-regression sign-off, 100% flag rollout"] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 2.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
+| # | Phase | Milestone | Deliverable | AC Met | O | M | P | Blended | Confidence | Construction | Multiplier | Engineering | Operational | Rollout | Risk |
+| :---: | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| M0 | Spike | [Name — only if Spike Rule triggered] | [e.g. "Spike report: legacy auth risk resolved"] | — | — | — | — | 1 day | — | 1 day | 1.0× | 1 day | — | — | 🔴 |
+| M1 | Validation | [Name] | [Concrete artifact] | [AC ref] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 2.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
+| M2 | Core Build | [Name] | [Concrete artifact — e.g. "Feature-complete behind flag, passing integration tests"] | [AC ref] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 3.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
+| M3 | Launch Readiness | [Name] | [Concrete artifact — e.g. "Zero-regression sign-off, 100% flag rollout"] | [AC ref] | [d] | [d] | [d] | [(O+4M+P)/6] | *70%: [M]d · 95%: [P]d* | [d] | [e.g. 2.5×] | [d] | [d] | [d] | 🔴/🟡/🟢 |
 
 **PERT:** O = Optimistic (AI-Accelerationist) · M = Most Likely · P = Pessimistic (Skeptical SRE) · Blended = (O + 4M + P) / 6
 
@@ -148,19 +221,19 @@
 
 ## Technical Breakdown
 
-> For engineers. One section per repo. Enough context to start, not a full spec.
+> For engineers. One section per repo for the chosen solution. Enough context to start, not a full spec.
 
 ### `[repo-name]`
 
 **Business system:** [Plain-language name — e.g. Payment Processing]
 **Milestones:** M1, M2
 **Oversight Multiplier:** [e.g. 4.0× — Auth module; 3:1 review ratio applies]
-**Design decision:** [e.g. "Sync API call over event bus — existing service calls here are all synchronous and async infra isn't in place"]
-**Knowledge Owner:** [who to loop in for this area — Bus Factor check]
+**Design decision:** [e.g. "Sync API call over event bus — existing calls here are synchronous and async infra isn't in place"]
+**Knowledge Owner:** [who to loop in — Bus Factor check]
 
 | Area / File | Change needed | Verification Overhead | Rationale |
 | :--- | :--- | :---: | :--- |
-| `src/domain/service.go` | [What to add or change] | High / Med / Low | [Why — ties to PRD requirement or RAD risk] |
+| `src/domain/service.go` | [What to add or change] | High / Med / Low | [Why — ties to AC or RAD risk] |
 | `src/api/handler.go` | [What to add or change] | High / Med / Low | [Why] |
 
 **Testing required:**
