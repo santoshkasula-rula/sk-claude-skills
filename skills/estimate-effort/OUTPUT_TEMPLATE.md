@@ -229,6 +229,43 @@ M1: [repo-a] — [deliverable]
 
 ---
 
+## Why These Numbers: Estimation Rationale
+
+> For PMs and Leadership. Explains the reasoning behind the effort estimates — not just what we built, but why the numbers are what they are.
+
+### What the estimate is actually measuring
+
+Software estimates often feel like guesses because the hardest part isn't writing the code — it's everything around it. The numbers in this document account for:
+
+- **Understanding and design time** — Before any code is written, the engineer needs to deeply understand the existing system, identify the right integration points, and make design decisions that won't create problems later. This is invisible work that PRDs never capture.
+- **Integration and coordination overhead** — [Specific to this project: e.g. "This feature touches 3 services that weren't originally designed to work together. Every integration point requires reading, testing, and validating behavior across system boundaries — not just writing new code."]
+- **Validation and review** — [Specific to this project: e.g. "Changes to the payment flow require security review, edge case testing, and sign-off from multiple stakeholders. The code might be written in hours; getting it production-ready takes days."]
+- **The 20% buffer** — Applied to Engineering only. This isn't padding — it's the empirical gap between "it works in dev" and "it's ready to ship." It accounts for the bugs found in code review, the edge cases surfaced in QA, and the config that only breaks in staging.
+
+### Why this milestone is sized the way it is
+
+| Milestone | Key sizing rationale |
+| :--- | :--- |
+| M1 | [e.g. "Larger than it looks — the schema migration requires careful rollback planning and coordination with Platform before we can safely run it in production"] |
+| M2 | [e.g. "This is the riskiest milestone. The legacy auth integration has no existing tests, so we're building blind until we write them ourselves — that's where most of the estimate lives"] |
+| M3 | [e.g. "Rollout is non-trivial because we're doing a gradual flag ramp across user cohorts, not a single deploy. Each increment requires monitoring and a manual sign-off before the next one"] |
+
+### What would make these numbers wrong
+
+These estimates hold **if** the assumptions in the RAD section stay true. The things most likely to change the timeline:
+
+- [e.g. "If the legacy auth service requires a contract change, M2 expands significantly — that negotiation alone could add a week"]
+- [e.g. "If staging access isn't provisioned before M1 starts, the entire sequence shifts right"]
+- [e.g. "If the external API rate limits are lower than documented, we'll need an additional caching layer that isn't scoped here"]
+
+### How to read the effort buckets
+
+- **Engineering** days = the time an engineer's brain is actively on this problem (design, coding, review, debugging). Not calendar days — focused work time.
+- **Operational** days = the coordination, configuration, and deployment work that doesn't show up in the code but absolutely shows up in the timeline.
+- **Rollout** days = getting it safely to users. QA, flag ramps, stakeholder demos, and the inevitable "can we just double-check one more thing" that happens before leadership signs off.
+
+---
+
 ## Engineer Updates
 
 > Living document. Engineers: log estimate changes here as you uncover more context. PMs: check this table for the most current delivery picture.

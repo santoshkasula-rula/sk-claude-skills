@@ -239,6 +239,11 @@ Write to `Effort Breakdown Analysis - [Project Name].md` in the current director
 - **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
 - **Technical Breakdown** — one section per repo for the chosen solution, specific files/areas, one-line rationale each.
 - **Cross-repo map** — only if `--root`.
+- **Why These Numbers** — written for PMs and Leadership, not engineers. Explain the reasoning behind the estimates in plain language. Cover four things:
+  1. **What the estimate is actually measuring** — name the invisible work specific to this project: which systems needed to be understood before writing a line of code, which integration points required negotiation, why validation overhead is higher than it looks. Avoid generic statements — tie every claim to something concrete from the requirements, RAD, or repo impact analysis.
+  2. **Why each milestone is sized the way it is** — one sentence per milestone explaining the dominant sizing factor. If M2 is large because of a legacy system with no test coverage, say that. If M3 rollout is non-trivial because of a phased flag ramp, say that.
+  3. **What would make these numbers wrong** — 2–3 specific conditions from the RAD that, if they break, shift the timeline materially. Not generic risks — the actual assumptions this estimate depends on.
+  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand.
 - **Engineer Updates** — empty table, leave for the team.
 
 End with:
