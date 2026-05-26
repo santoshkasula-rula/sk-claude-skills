@@ -6,6 +6,21 @@
 
 ---
 
+## Table of Contents
+
+- [Executive Summary](#executive-summary)
+- [Requirements](#requirements)
+- [Solution Options](#solution-options)
+- [RAD Analysis](#rad-analysis)
+- [Tradeoff Matrix](#tradeoff-matrix)
+- [Recommendation](#recommendation)
+- [Milestones](#milestones)
+- [Technical Breakdown](#technical-breakdown)
+- [Why These Numbers](#why-these-numbers-estimation-rationale)
+- [Engineer Updates](#engineer-updates)
+
+---
+
 ## Executive Summary
 
 > Written for PMs and senior leadership. No repo names. No technical jargon.
