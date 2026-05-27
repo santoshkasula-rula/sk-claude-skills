@@ -14,12 +14,16 @@ Generate a unified sprint goals summary for Eng and PM leadership across the fou
 
 **Boards:**
 
-| Team | Project | Board |
-| :--- | :--- | :--- |
-| PAR | PAR | 1205 |
-| MARTECH | MARTECH | 1073 |
-| DEA | DEA | 1042 |
-| NEV | NEV | 2103 |
+| Team | Project | Board ID | Board URL |
+| :--- | :--- | :--- | :--- |
+| PAR | PAR | 1205 | https://rula.atlassian.net/jira/software/c/projects/PAR/boards/1205 |
+| MARTECH | MARTECH | 1073 | https://rula.atlassian.net/jira/software/c/projects/MARTECH/boards/1073 |
+| DEA | DEA | 1042 | https://rula.atlassian.net/jira/software/c/projects/DEA/boards/1042 |
+| NEV | NEV | 2103 | https://rula.atlassian.net/jira/software/c/projects/NEV/boards/2103 |
+
+Jira base URL: `https://rula.atlassian.net`
+Epic URL pattern: `https://rula.atlassian.net/browse/[EPIC-KEY]`
+Issue URL pattern: `https://rula.atlassian.net/browse/[ISSUE-KEY]`
 
 ---
 
@@ -61,9 +65,11 @@ For tickets with an Epic link, call `getJiraIssue` on the Epic to get its summar
 
 Use Epic context to write richer, more meaningful goal statements — not just ticket titles.
 
+Store each Epic's key so it can be linked in the output as `https://rula.atlassian.net/browse/[EPIC-KEY]`.
+
 ---
 
-## Step 5 — Write output file
+## Step 4 — Write output file
 
 Write to `Sprint Goals - [YYYY-MM-DD].md` in the current directory, using today's date (e.g. `Sprint Goals - 2026-05-27.md`).
 
@@ -71,44 +77,91 @@ Structure:
 
 ```
 # Sprint Goals — [Sprint Name]
-[Date generated]
+Generated: [YYYY-MM-DD]
 
-## How to use this doc
+## Table of Contents
+- [How to Use This Doc](#how-to-use-this-doc)
+- [PAR](#par--[tagline-slug])
+- [MARTECH](#martech--[tagline-slug])
+- [DEA](#dea--[tagline-slug])
+- [NEV](#nev--[tagline-slug])
+- [Cross-Team Dependencies](#cross-team-dependencies) *(if applicable)*
+- [Leadership Summary](#leadership-summary)
+
+---
+
+## How to Use This Doc
 [2 sentences: audience, purpose — focus areas for leadership to track progress and remove blockers]
 
 ---
 
-## [Team Name] — [2–4 word team focus tagline]
+## PAR — [2–4 word team focus tagline]
+🔗 [View Board](https://rula.atlassian.net/jira/software/c/projects/PAR/boards/1205) · Sprint: [Sprint Name]
 
-**Sprint focus:** [1–2 sentences synthesizing what this team is shipping this sprint, in plain language. Reference the Epic or initiative name, not ticket IDs.]
+**Sprint focus:** [1–2 sentences synthesizing what this team is shipping this sprint, in plain language.]
 
-### Goals
-- **[Focus Area 1]** — [1 sentence: what they're working toward and why it matters]
-- **[Focus Area 2]** — [1 sentence]
-- **[Focus Area 3]** — [1 sentence, if applicable]
-
----
-
-[Repeat for each team: PAR, MARTECH, DEA, NEV]
+### Key Initiatives
+- **[[Epic Name]](https://rula.atlassian.net/browse/[EPIC-KEY])** — [1 sentence: what they're working toward and why it matters]
+- **[[Epic Name]](https://rula.atlassian.net/browse/[EPIC-KEY])** — [1 sentence]
+- **[Theme Name]** — [1 sentence — use plain text if no Epic key available]
 
 ---
 
-## Cross-team dependencies
-[Only include if tickets across teams reference each other or share an Epic. Otherwise omit this section.]
+## MARTECH — [2–4 word team focus tagline]
+🔗 [View Board](https://rula.atlassian.net/jira/software/c/projects/MARTECH/boards/1073) · Sprint: [Sprint Name]
+
+**Sprint focus:** [...]
+
+### Key Initiatives
+- **[[Epic Name]](https://rula.atlassian.net/browse/[EPIC-KEY])** — [1 sentence]
+- ...
 
 ---
 
-## Leadership summary
+## DEA — [2–4 word team focus tagline]
+🔗 [View Board](https://rula.atlassian.net/jira/software/c/projects/DEA/boards/1042) · Sprint: [Sprint Name]
+
+**Sprint focus:** [...]
+
+### Key Initiatives
+- **[[Epic Name]](https://rula.atlassian.net/browse/[EPIC-KEY])** — [1 sentence]
+- ...
+
+---
+
+## NEV — [2–4 word team focus tagline]
+🔗 [View Board](https://rula.atlassian.net/jira/software/c/projects/NEV/boards/2103) · Sprint: [Sprint Name]
+
+**Sprint focus:** [...]
+
+### Key Initiatives
+- **[[Epic Name]](https://rula.atlassian.net/browse/[EPIC-KEY])** — [1 sentence]
+- ...
+
+---
+
+## Cross-Team Dependencies
+[Only include if tickets across teams reference each other or share an Epic. Otherwise omit this section entirely.]
+
+---
+
+## Leadership Summary
 [3–5 bullet points across all teams: the most important things leadership needs to know this sprint — biggest bets, highest-risk items, anything that needs a decision or unblocking from above.]
 ```
 
-**Tone:** Plain language. Write for someone who is not reading Jira. Goal names should describe outcomes, not tasks. Avoid ticket IDs in the goals section — use them only in the blockers table.
+**Linking rules:**
+- Always link Epic names using `[Epic Name](https://rula.atlassian.net/browse/EPIC-KEY)` when an Epic key is known.
+- If an Epic key is not available, use plain bold text — do not fabricate a URL.
+- Board links are hardcoded per the board table above — always include them.
+- TOC anchor slugs must match the actual heading text (lowercase, spaces → hyphens).
+
+**Tone:** Plain language. Write for someone who is not reading Jira. Goal names should describe outcomes, not tasks. Avoid ticket IDs in the goals section.
 
 ---
 
-## Step 6 — Print summary to chat
+## Step 5 — Print summary to chat
 
-After writing the file, print the full **Leadership summary** section directly in the chat response so leadership gets the key points without opening the file.
+After writing the file, print the full **Leadership Summary** section directly in the chat response so leadership gets the key points without opening the file.
 
 Then output:
 > Full sprint goals written to `Sprint Goals - [YYYY-MM-DD].md`
