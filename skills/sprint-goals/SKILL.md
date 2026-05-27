@@ -65,7 +65,7 @@ Use Epic context to write richer, more meaningful goal statements — not just t
 
 ## Step 5 — Write output file
 
-Write to `Sprint Goals - [Sprint Name].md` in the current directory. Use the sprint name from the first board's active sprint as the filename (e.g. `Sprint Goals - Sprint 42.md`).
+Write to `Sprint Goals - [YYYY-MM-DD].md` in the current directory, using today's date (e.g. `Sprint Goals - 2026-05-27.md`).
 
 Structure:
 
@@ -111,5 +111,5 @@ Structure:
 After writing the file, print the full **Leadership summary** section directly in the chat response so leadership gets the key points without opening the file.
 
 Then output:
-> Full sprint goals written to `Sprint Goals - [Sprint Name].md`
+> Full sprint goals written to `Sprint Goals - [YYYY-MM-DD].md`
 > To share: copy the file or paste the Leadership Summary above into your standup doc / Slack.
