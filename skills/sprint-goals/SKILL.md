@@ -71,7 +71,7 @@ Store each Epic's key so it can be linked in the output as `https://rula.atlassi
 
 ## Step 4 — Write output file
 
-Write to `Sprint Goals - [YYYY-MM-DD].md` in the current directory, using today's date (e.g. `Sprint Goals - 2026-05-27.md`).
+Write to `/Users/skasula/source-code/markdown-files/Sprint Goals - [YYYY-MM-DD].md`, using today's date (e.g. `Sprint Goals - 2026-05-27.md`).
 
 Structure:
 
@@ -164,5 +164,5 @@ Generated: [YYYY-MM-DD]
 After writing the file, print the full **Leadership Summary** section directly in the chat response so leadership gets the key points without opening the file.
 
 Then output:
-> Full sprint goals written to `Sprint Goals - [YYYY-MM-DD].md`
+> Full sprint goals written to `/Users/skasula/source-code/markdown-files/Sprint Goals - [YYYY-MM-DD].md`
 > To share: copy the file or paste the Leadership Summary above into your standup doc / Slack.
