@@ -25,3 +25,8 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 | [sprint-goals](skills/sprint-goals/SKILL.md) | Generates a unified sprint goals summary across PAR, MARTECH, DEA, and NEV boards — synthesizes active sprint tickets into focus areas, blockers, and a leadership summary |
 | [weekly-eng-report](skills/weekly-eng-report/SKILL.md) | Weekly Engineering Leader report aggregating GitHub PR velocity, Jira sprint health, H2 OKR alignment, and blockers across PAR, DEA, NEV, and MARTECH teams |
 | [team-deployment-frequency](skills/team-deployment-frequency/SKILL.md) | Per-team merged PRs and pooled deployment frequency (DORA-style deploy counts) across all repos a GitHub team touches, plus a weekly PR/deploy correlation scatter chart with Pearson r per team |
+| [incident-postmortem-summary](skills/incident-postmortem-summary/SKILL.md) | Summarizes Datadog incidents under Santosh's teams — root cause, lessons learned, and Jira-enriched action items per incident, plus a cross-incident executive summary |
+
+## Plugins
+
+Some skills are also packaged as installable plugins under `plugins/`, listed in `.claude-plugin/marketplace.json` (`weekly-eng-report`, `incident-postmortem-summary`).
