@@ -1,0 +1,11 @@
+{
+  "name": "weekly-eng-report",
+  "version": "1.0.0",
+  "description": "Weekly Engineering Leader report organized by ENGKR initiative — Epics, due dates, story points, and GitHub PR activity across PAR, DEA, NEV, and MARTECH teams",
+  "author": {
+    "name": "Santosh Kasula"
+  },
+  "license": "Proprietary",
+  "keywords": ["engineering", "reporting", "okr", "jira", "github"],
+  "skills": "./skills/"
+}
