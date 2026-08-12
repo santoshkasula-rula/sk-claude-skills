@@ -41,6 +41,15 @@ Postmortem links vary by incident. Detect the link type from its URL and use the
 
 This skill does not read Confluence. If a postmortem link points at `*.atlassian.net/wiki/...`, treat it as `unfetchable (Confluence not supported)` rather than attempting to fetch it.
 
+### Slack channel links
+Every incident has a dedicated Slack channel named `incident-<public_id>` (e.g. incident 887 → `incident-887`). Build its link as:
+
+```
+https://slack.com/app_redirect?channel=incident-<public_id>&team=TFMMYKQU8
+```
+
+`public_id` is the numeric incident ID from Datadog (not the UUID `id` field, not the `IR-N` slug). This is a constructed link, not something read from the incident payload — Datadog's incident API has no field for the linked Slack channel.
+
 ### Jira ticket enrichment
 Postmortems frequently link out to Jira tickets for action items (e.g. `rula.atlassian.net/browse/PAR-2543`). For every Jira ticket key or link found in an action item, fetch the ticket via `getJiraIssue` and pull:
 - **Status** (e.g. To Do / In Progress / Done)
@@ -137,7 +146,7 @@ After computing all rows, write one or two **Takeaway** sentences: do the worst 
 ## Step 4 — Synthesize per-incident summary
 
 For each incident, produce one card with:
-- **Incident title**, linked to the Datadog incident, followed by the postmortem link — e.g. `## [Incident Title](datadog incident URL) ([Postmortem](postmortem URL))`. If the postmortem is missing/unfetchable, write that in place of the link (see Step 5 template).
+- **Incident title**, linked to the Datadog incident, followed by the postmortem link and the Slack channel link — e.g. `## [Incident Title](datadog incident URL) ([Postmortem](postmortem URL), [Slack](slack link))`. If the postmortem is missing/unfetchable, write that in place of the link (see Step 5 template). The Slack link is always constructible (see Configuration — Slack channel links) and should always be present.
 - Severity, team(s), state, declared/resolved dates, duration as a metadata line under the title.
 - **Incident Description** — 2-4 sentences from Step 3 (or from Datadog's own summary field if no postmortem exists).
 - **Lessons Learned from Postmortem** — 2-4 sentences from Step 3. If unavailable from any source, state `Lessons learned not documented`.
@@ -233,7 +242,7 @@ _Computed from Datadog incident fields (`created`/`detected`/`resolved`), cross-
 
 ## Incidents
 
-## [Incident Title](datadog incident URL) ([Postmortem](postmortem URL) / Postmortem: Missing / Postmortem: Unfetchable ([reason]))
+## [Incident Title](datadog incident URL) ([Postmortem](postmortem URL) / Postmortem: Missing / Postmortem: Unfetchable ([reason]), [Slack](slack link))
 **Severity:** SEV-N · **Team:** [team] · **State:** [state] · **Declared:** [date] · **Resolved:** [date or "Ongoing"] · **Duration:** [N hrs/days]
 
 **Incident Description:** [2-4 sentences]
