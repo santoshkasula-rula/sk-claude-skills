@@ -19,7 +19,8 @@ Ask for each file in sequence. Read it before asking for the next.
 
 1. **PRD** — "Let's dig in. Drop the path to your PRD or paste the contents directly — whichever is easier." — required, re-ask if unreadable. If a path is given, read the file. If contents are pasted, use them directly.
 2. **Transcript** — "PRDs are the polished story. I want the unpolished one too — the part where someone said 'I'm not sure how long that'll take' or 'we've never touched that service.' Got a Zoom transcript, meeting notes, Slack thread, or any other discussion doc? (path, paste, or skip — but the messier the better)" — if provided, normalize it: strip timestamps, speaker labels, `[inaudible]`, and merge fragmented turns into prose.
-3. **Additional context** — "Anything else that would embarrass us if we ignored it? Architecture docs, API specs, prior plans, that one Confluence page nobody's updated since 2022? (path, paste, or done)" — repeat until 'done'.
+3. **1-pager (if one exists)** — ask for it with the PRD. It informs intent, but the PRD wins on any conflict.
+4. **Additional context** — "Anything else that would embarrass us if we ignored it? Architecture docs, API specs, prior plans, that one Confluence page nobody's updated since 2022? (path, paste, or done)" — repeat until 'done'.
 
 ---
 
@@ -71,7 +72,9 @@ Extract:
 - **Scope** — features explicitly in scope; features explicitly out of scope
 - **Constraints** — non-negotiables (compliance, performance targets, existing contracts)
 
-**Conflict rule:** Transcript anxiety markers override PRD optimism on the same component — always.
+**Conflict rules:** If a 1-pager and a PRD disagree, the **PRD wins**. Transcript anxiety markers override PRD optimism on the same component — always.
+
+**Evidence tags:** tag each extracted item as **said**, **inferred**, **assumed**, or **from vendor docs** so later steps can show where every number came from.
 
 Present a consolidated requirements summary and ask one targeted question if anything critical is missing or ambiguous:
 
@@ -206,51 +209,65 @@ If the engineer pushes back, ask: *"What's the pull toward [other option] — is
 
 ---
 
-## Step 8 — Design milestones
+## Step 8 — Design milestones and dates
 
-Create 3–5 milestones for the **chosen solution**. Use the language from the documents — names, deliverables, and business value must reflect the actual words and goals from the PRD, transcript, and requirements synthesis. No generic placeholders.
+Plan as an engineering manager who has to defend the numbers. Start with a **Discovery** milestone (M0), then create 3–5 incremental milestones for the **chosen solution**. Use the language from the documents — names, deliverables, and business value must reflect the actual words and goals from the PRD, transcript, and requirements synthesis. No generic placeholders.
 
-Each milestone must:
-- Deliver a concrete, demonstrable artifact
+**Discovery (M0):** capped at **2 working days**, no buffer. Its date is the day 0 → day ≤2 starting point for all other milestones.
+
+Each milestone after M0 must:
+- Be **incremental** — put something usable in a named stakeholder's hands, not just an internal checkpoint
 - Be sequenced so each unblocks the next
 - Map to a specific business value or acceptance criterion from Step 3
-- Break **heads-down effort** into three buckets (never combine):
-  - **Engineering** — hands-on design, coding, writing/running tests, debugging
-  - **Operational** — hands-on deployment, infra, config, secrets work
-  - **Rollout** — hands-on QA, test execution, flag changes, preparing the stakeholder demo
-- Carry a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
+- Break **focused effort** into three buckets, always in separate columns, never combined:
+  - **Core Engineering** — design, code, review, writing/running tests, debugging
+  - **Operational** — setup, infra, access, config, secrets (hands-on work)
+  - **Rollout** — demos, reconciliation, UAT, training (hands-on work)
+- Carry a confidence level (**High / Medium / Low**) and a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
 
-**Heads-down only.** Effort numbers count only the time an engineer is actively working on the problem. Eliminate all waiting from the effort buckets: PR review queues, approvals, environment or access provisioning, other teams' turnaround, QA queues, flag-ramp soak time, scheduled release windows, and stakeholder sign-off. Those are tracked separately in Step 8b and feed the delivery timeline, never the effort totals.
+**Buffer:** add 20% to Core Engineering only. Show it as its own column. Never hide it inside milestone numbers and never apply it to Operational, Rollout, or Discovery.
 
-**Buffer:** 20% added to Engineering heads-down total only. Show raw + buffered separately. Never embed inside milestones.
+**Focused days → elapsed days:** per milestone, focused days = Core Engineering + 20% buffer + Operational + Rollout. Divide by a **65% focus factor** to get elapsed working days (meetings, context switching, and interruptions). Show both.
+
+**Dates:** give each milestone **one date** as a running total of elapsed working days from day 0 (e.g. "Day 14"). No ranges. No T-shirt sizes (S/M/L). Every file you write must use these same dates.
+
+**Heads-down only.** Dates and effort contain only time an engineer is actively working. Waiting never goes into them: reviews (Legal, Security, architecture), vendor replies, access provisioning, sign-offs, pilot runs, QA queues, flag-ramp soak time, release windows. These are listed as assumptions in Step 8b.
+
+**AI-assisted workflow, no blanket discount.** Assume Claude drafts code and tests where tooling makes that practical, but do not apply a flat percentage reduction. For each milestone show where human review and judgment still cost time (clarifying requirements, choosing the approach, reviewing generated work, validating behavior, integration and security checks) and keep that time inside Core Engineering or Rollout.
+
+**Evidence tags.** Tag every non-trivial claim, task basis, and assumption as **said** (stated in a document or by the engineer), **inferred** (reasoned from what was said), **assumed** (no source, our bet), or **from vendor docs**. Check vendor claims against their current docs, not memory — fetch the docs; if you cannot, tag the claim **assumed** and say so.
+
+**Bottom-up task table.** Build a task-level table behind the milestones: task, focused days, basis (with evidence tag), certainty (High / Medium / Low). The task totals must reconcile to the milestone bucket totals; show the reconciliation explicitly (task sum = milestone sum per bucket) and fix any mismatch before continuing.
 
 If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 ---
 
-## Step 8b — Wait-time assumptions and delivery timeline
+## Step 8b — Wait-time assumptions
 
-For each milestone, identify the waiting that sits outside heads-down work, grouped by area:
+Waiting is **not** in the dates. Identify it, per milestone and area, as an assumption:
 
-- **Engineering waits** — PR review turnaround, design/architecture review, security review, answers from PM or other teams
-- **Operational waits** — access/environment/secrets provisioning, infra tickets, change-approval windows, release trains
-- **Rollout waits** — QA queue, flag-ramp soak and monitoring periods, UAT, stakeholder sign-off
+- **Core Engineering waits** — PR review turnaround, Legal/Security/architecture review, answers from PM or other teams
+- **Operational waits** — access/environment/secrets provisioning, infra tickets, change-approval windows, vendor replies, release trains
+- **Rollout waits** — QA queue, pilot runs, flag-ramp soak and monitoring, UAT scheduling, stakeholder sign-off
 
-For each wait give a duration in **calendar days** (or a range), who or what it depends on, and whether it is on the critical path. Use the transcript and RAD to ground these; where nothing is known, state a clearly labeled default assumption (e.g. "assumes 1 day PR review turnaround") rather than leaving it blank. Waits that can overlap with other milestones' heads-down work should be marked parallel, not added.
+For each wait give: the assumed duration in working days, who or what it depends on, an evidence tag, and **which milestone dates slip day for day if it runs late** (a late wait on M1 slips M1 and every later milestone). Where nothing is known, state a clearly labeled default (e.g. "assumes 1 day PR review turnaround, assumed") rather than leaving it blank. Call out that **review delays (Legal, Security) are the biggest schedule risk** and name the ones that apply.
 
 Present in one message and ask the engineer to correct the numbers:
 
-> **Heads-down effort is only half the story. Here are the waits I'm assuming — these add to delivery time, not effort. Fix anything that's off:**
+> **These waits are not in the dates — they're the assumptions the dates depend on. Each one says what slips if it's late. Fix anything that's off:**
 >
-> | Milestone | Area | Wait | Assumed duration | Depends on | On critical path? |
-> | :--- | :--- | :--- | :---: | :--- | :---: |
-> | M1 | Engineering | [e.g. PR + security review] | [e.g. 2 days] | [e.g. Platform reviewers] | Yes |
+> | Milestone | Wait | Assumed duration | Depends on | Evidence | Dates that slip day for day |
+> | :--- | :--- | :---: | :--- | :---: | :--- |
+> | M1 | [e.g. Security review] | [e.g. 3 days] | [e.g. Security team] | assumed | M1, M2, M3 |
 >
-> Which of these is most likely to be worse than I've guessed?
+> Which of these is most likely to be worse than I've guessed? Review delays are usually the biggest risk — are Legal or Security already in the loop?
 
 Wait for response. Update the assumptions.
 
-**Delivery timeline:** total heads-down days (buffered Engineering + Operational + Rollout) **plus** the critical-path wait days = estimated elapsed delivery time. Report heads-down total, critical-path wait total, and the combined delivery timeline separately. Never fold waits into the effort numbers.
+**Delivery view:** the dates are the plan if every wait is zero. Also report the expected-wait scenario (dates plus the sum of assumed waits that fall on the path) as a separate line, never as a replacement for the plan dates.
+
+**Confidence:** assign a confidence level per milestone and an overall level, based on task certainty, the number of Low-certainty tasks, and the number of wait assumptions the milestone depends on.
 
 ---
 
@@ -258,22 +275,28 @@ Wait for response. Update the assumptions.
 
 Write to `Effort Breakdown Analysis - [Project Name].md` in the current directory, using the actual project name from the documents. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
-- **Executive Summary** — plain language, no repo names: goal, chosen solution (one sentence), heads-down effort totals (raw + buffered), critical-path wait total, estimated delivery timeline, success criteria, risk summary (one sentence if any 🔴 milestone), key assumptions, hard dependencies.
+- **Executive Summary** — plain language, no repo names: goal, chosen solution (one sentence), focused effort totals per bucket (Core Engineering raw + 20% buffer, Operational, Rollout), elapsed working days (÷ 65% focus factor), final milestone date, overall confidence, success criteria, risk summary (one sentence; state that review delays are the biggest risk), key assumptions, hard dependencies.
 - **Requirements** — use cases, acceptance criteria, success metrics, constraints, in/out of scope.
 - **Solution Options** — one section per candidate with description, repo impact, and key trade-off. Mark the chosen one.
 - **RAD** — every item cites source (PRD, Transcript, or Engineer) and which solution(s) it affects.
 - **Tradeoff Matrix** — the comparison table from Step 6.
 - **Recommendation** — chosen solution, rationale, main risk accepted.
-- **Milestones** — deliverable, business value, Engineering / Operational / Rollout heads-down effort, risk flag.
-- **Wait-Time Assumptions** — per-milestone, per-area table of waits (duration, dependency, critical-path or parallel), plus the delivery timeline calculation (heads-down + critical-path waits).
+- **Milestones** — M0 Discovery plus incremental milestones: what the stakeholder can use, Core Engineering / Buffer / Operational / Rollout in separate columns, focused days, elapsed days, one running-total date, confidence, risk flag. Include a Mermaid timeline or flowchart of milestones and dates.
+- **Bottom-up Task Table** — task, focused days, basis (evidence-tagged), certainty; plus an explicit reconciliation to the milestone totals.
+- **Wait-Time Assumptions** — waits per milestone with duration, dependency, evidence tag, and which dates slip day for day if late. Review delays called out as the biggest risk. Waits are never in the dates.
+- **AI-assisted workflow notes** — where human review and judgment still cost time; no blanket discount.
 - **Technical Breakdown** — one section per repo for the chosen solution, specific files/areas, one-line rationale each.
 - **Cross-repo map** — only if `--root`.
 - **Why These Numbers** — written for PMs and Leadership, not engineers. Explain the reasoning behind the estimates in plain language. Cover four things:
   1. **What the estimate is actually measuring** — name the invisible work specific to this project: which systems needed to be understood before writing a line of code, which integration points required negotiation, why validation overhead is higher than it looks. Avoid generic statements — tie every claim to something concrete from the requirements, RAD, or repo impact analysis.
   2. **Why each milestone is sized the way it is** — one sentence per milestone explaining the dominant sizing factor. If M2 is large because of a legacy system with no test coverage, say that. If M3 rollout is non-trivial because of a phased flag ramp, say that.
   3. **What would make these numbers wrong** — 2–3 specific conditions from the RAD that, if they break, shift the timeline materially. Not generic risks — the actual assumptions this estimate depends on.
-  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand, stating that these are heads-down working days only and that waiting time is shown separately in Wait-Time Assumptions.
+  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand, stating that these are focused working days only and that waiting time is shown separately in Wait-Time Assumptions. Also explain the 20% buffer and the 65% focus factor in one sentence each.
 - **Engineer Updates** — empty table, leave for the team.
+
+**Mermaid:** use Mermaid diagrams in every markdown file you write. Keep labels short, with no parentheses and no line breaks inside labels.
+
+**Consistency check (final step):** before finishing, re-read every file written and confirm milestone dates, bucket totals, buffer, elapsed days, confidence levels and wait assumptions match the final plan exactly. Fix or remove any stale dates or numbers in other files.
 
 End with:
 > **Share with PMs / leadership:** Executive Summary, Requirements, Recommendation, Milestones

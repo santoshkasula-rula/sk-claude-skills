@@ -15,6 +15,7 @@
 - [Tradeoff Matrix](#tradeoff-matrix)
 - [Recommendation](#recommendation)
 - [Milestones](#milestones)
+- [Bottom-up Task Table](#bottom-up-task-table)
 - [Wait-Time Assumptions](#wait-time-assumptions)
 - [Technical Breakdown](#technical-breakdown)
 - [Why These Numbers](#why-these-numbers-estimation-rationale)
@@ -34,13 +35,14 @@
 | **Chosen Approach** | [Solution name — one sentence on what it is] |
 | **Success Criteria** | [How we'll know this is done] |
 | **Business Systems Affected** | [Plain-language names — e.g. Checkout Flow, Payment Processing] |
-| **Engineering Effort (heads-down)** | [X days raw] → [X days + 20% buffer] |
-| **Operational Effort (heads-down)** | [X days — hands-on deployment, infra, config, secrets] |
-| **Rollout Effort (heads-down)** | [X days — hands-on QA, testing, flag changes, demo prep] |
-| **Total Heads-Down Effort** | [Buffered Engineering + Operational + Rollout] |
-| **Critical-Path Wait Time** | [X calendar days — reviews, approvals, provisioning, soak time; see Wait-Time Assumptions] |
-| **Estimated Delivery Timeline** | [Total heads-down + critical-path waits] |
-| **Risk Summary** | [One sentence — e.g. "One milestone carries high risk due to legacy auth layer — see RAD."] |
+| **Core Engineering** | [X days raw] + [Y days 20% buffer] = [Z days] |
+| **Operational** | [X days — setup, infra, access] |
+| **Rollout** | [X days — demos, reconciliation, UAT, training] |
+| **Total Focused Days** | [Core Engineering incl. buffer + Operational + Rollout] |
+| **Elapsed Working Days** | [Total focused ÷ 0.65 focus factor] |
+| **Final Milestone Date** | [Day N — running total of working days from day 0; excludes waiting] |
+| **Overall Confidence** | [High / Medium / Low] |
+| **Risk Summary** | [One sentence. Review delays (Legal, Security) are the biggest schedule risk — see Wait-Time Assumptions. e.g. "One milestone also carries high risk due to legacy auth layer."] |
 | **Key Assumptions** | [e.g. "Staging access available; v2 payments endpoint is idempotent"] |
 | **Hard Dependencies** | [e.g. "Payment service schema migration must complete before M2"] |
 
@@ -179,40 +181,60 @@
 
 ## Milestones
 
-> For the chosen solution. Each milestone delivers something demonstrable. Sequenced so each unblocks the next. Effort columns are **engineering heads-down working days only** — no waiting time. Waits are in [Wait-Time Assumptions](#wait-time-assumptions).
+> Each milestone puts something usable in a named stakeholder's hands. Effort is **focused working days only**: no waiting. Dates are a running total of elapsed working days from day 0 and exclude waiting; see [Wait-Time Assumptions](#wait-time-assumptions). Evidence tags: **said** · **inferred** · **assumed** · **from vendor docs**.
 
-| # | Milestone | Deliverable | Acceptance Criterion Met | Engineering | Operational | Rollout | Risk |
-| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| M1 | [Name] | [Concrete artifact — e.g. "API contract + DB schema merged to main"] | [Which AC from Requirements this satisfies] | [X days] | [Y days] | [Z days] | 🔴/🟡/🟢 |
-| M2 | [Name] | [Concrete artifact] | [AC reference] | [X days] | [Y days] | [Z days] | 🔴/🟡/🟢 |
-| M3 | [Name] | [Concrete artifact] | [AC reference] | [X days] | [Y days] | [Z days] | 🔴/🟡/🟢 |
+| # | Milestone | Usable by [stakeholder] | AC met | Core Eng | Buffer 20% | Operational | Rollout | Focused days | Elapsed days | Date | Confidence | Risk |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| M0 | Discovery | [Decisions and scope locked] | n/a | [X, max 2 total] | none | n/a | n/a | [X] | [X] | Day [N] | High/Med/Low | 🟢 |
+| M1 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.65] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
+| M2 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.65] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
 
-**Effort totals:**
-- Engineering: [raw sum] → [+20% buffer]
-- Operational: [sum — no buffer]
-- Rollout: [sum — no buffer]
-- **Total heads-down: [all three combined]**
+**Totals:** Core Engineering [raw] + [buffer] = [Z] · Operational [sum] · Rollout [sum] · Focused [sum] · Elapsed [sum ÷ 0.65] · **Final date: Day [N]** · **Overall confidence: [level]**
 
 **Risk legend:** 🔴 High · 🟡 Medium · 🟢 Low
+
+```mermaid
+flowchart LR
+    M0[M0 Discovery Day 2] --> M1[M1 Name Day N]
+    M1 --> M2[M2 Name Day N]
+    M2 --> M3[M3 Name Day N]
+```
+
+### AI-assisted workflow notes
+
+No blanket discount is applied. Where Claude drafts code and tests, human time still goes to: [e.g. clarifying requirements, choosing the approach, reviewing generated work, validating behavior, security and integration checks, with the milestones affected].
+
+---
+
+## Bottom-up Task Table
+
+> The task-level basis behind the milestones. Totals must reconcile.
+
+| Milestone | Task | Bucket | Focused days | Basis | Certainty |
+| :---: | :--- | :---: | :---: | :--- | :---: |
+| M1 | [Task] | Core Eng / Operational / Rollout | [X] | [Why this number — **said** / **inferred** / **assumed** / **from vendor docs**] | High/Medium/Low |
+
+**Reconciliation:**
+
+| Milestone | Core Eng tasks = milestone | Operational tasks = milestone | Rollout tasks = milestone |
+| :---: | :---: | :---: | :---: |
+| M1 | [sum] = [sum] ✅ | [sum] = [sum] ✅ | [sum] = [sum] ✅ |
 
 ---
 
 ## Wait-Time Assumptions
 
-> Waiting is not effort. These are the calendar days the work sits idle waiting on people, systems, or time. They are excluded from the milestone effort above and added here to produce the delivery timeline. Each duration is an assumption — confirm or correct it.
+> Waiting is **not** in the dates. Each wait below is an assumption the dates depend on, and says which dates slip day for day if it runs late. **Review delays (Legal, Security) are the biggest schedule risk.**
 
-| Milestone | Area | Wait | Assumed duration | Depends on | Critical path? |
-| :---: | :--- | :--- | :---: | :--- | :---: |
-| M1 | Engineering | [e.g. PR + security review] | [e.g. 2 days] | [e.g. Platform reviewers] | Yes / Parallel |
-| M1 | Operational | [e.g. Staging access and secrets provisioning] | [e.g. 3 days] | [e.g. Platform team ticket] | Yes / Parallel |
-| M3 | Rollout | [e.g. Flag-ramp soak between 10% → 50% → 100%] | [e.g. 5 days] | [e.g. Monitoring sign-off] | Yes / Parallel |
+| Milestone | Wait | Assumed duration | Depends on | Evidence | Dates that slip day for day |
+| :---: | :--- | :---: | :--- | :---: | :--- |
+| M1 | [e.g. Security review] | [e.g. 3 working days] | [e.g. Security team] | assumed | M1, M2, M3 |
+| M1 | [e.g. Vendor sandbox access] | [e.g. 2 working days] | [e.g. Vendor reply] | said | M1, M2, M3 |
+| M3 | [e.g. Pilot run] | [e.g. 5 working days] | [e.g. Pilot users] | assumed | M3 |
 
-**Delivery timeline:**
-- Total heads-down effort: [X days]
-- Critical-path wait time: [Y calendar days] (waits marked Parallel are excluded because they overlap other work)
-- **Estimated delivery timeline: [X + Y days]**
+**If all waits land as assumed:** [final date + sum of waits on the path = Day N]. This is a scenario, not the plan; the plan dates above stay wait-free.
 
-**Biggest wait-time risk:** [The wait most likely to run longer than assumed and what it would do to the timeline.]
+**Biggest wait-time risk:** [The wait most likely to run longer than assumed and which dates it moves.]
 
 ---
 
@@ -277,7 +299,7 @@ Software estimates often feel like guesses because the hardest part isn't writin
 - **Understanding and design time** — Before any code is written, the engineer needs to deeply understand the existing system, identify the right integration points, and make design decisions that won't create problems later. This is invisible work that PRDs never capture.
 - **Integration and coordination overhead** — [Specific to this project: e.g. "This feature touches 3 services that weren't originally designed to work together. Every integration point requires reading, testing, and validating behavior across system boundaries — not just writing new code."]
 - **Validation and review** — [Specific to this project: e.g. "Changes to the payment flow require security review, edge case testing, and sign-off from multiple stakeholders. The code might be written in hours; getting it production-ready takes days."]
-- **The 20% buffer** — Applied to Engineering only. This isn't padding — it's the empirical gap between "it works in dev" and "it's ready to ship." It accounts for the bugs found in code review, the edge cases surfaced in QA, and the config that only breaks in staging.
+- **The 20% buffer** — Applied to Core Engineering only. This isn't padding — it's the empirical gap between "it works in dev" and "it's ready to ship." It accounts for the bugs found in code review, the edge cases surfaced in QA, and the config that only breaks in staging.
 
 ### Why this milestone is sized the way it is
 
@@ -297,12 +319,14 @@ These estimates hold **if** the assumptions in the RAD section stay true. The th
 
 ### How to read the effort buckets
 
-All three buckets count **heads-down working days only** — time an engineer is actively working on the task. Waiting is never included; it is shown in Wait-Time Assumptions and added to produce the delivery timeline.
+All three buckets count **focused working days only**: time an engineer is actively working on the task. Waiting is never included in effort or dates; it lives in Wait-Time Assumptions.
 
-- **Engineering** days = the time an engineer's brain is actively on this problem (design, coding, writing tests, debugging). Not calendar days — focused work time. Time waiting for code review is not included.
-- **Operational** days = the hands-on configuration, infra, and deployment work that doesn't show up in the code. Time waiting on provisioning or approvals is not included.
-- **Rollout** days = the hands-on work of getting it safely to users: running QA, changing flags, preparing demos. Soak time, UAT queues, and sign-off waits are not included.
-- **Wait time** = calendar days of idle time between work, from reviews, approvals, other teams, and monitoring periods. Added on top of effort to get the delivery timeline.
+- **Core Engineering** days = design, code, review, writing tests, and debugging. Time waiting for someone else's review is not included.
+- **Buffer** = 20% added to Core Engineering only, shown in its own column. It is the gap between "it works in dev" and "it's ready to ship."
+- **Operational** days = hands-on setup, infra, access, and config work. Waiting on provisioning or approvals is not included.
+- **Rollout** days = hands-on demos, reconciliation, UAT, and training. Pilot runs, soak time, and sign-off waits are not included.
+- **Elapsed days** = focused days ÷ 0.65 focus factor, which allows for meetings, context switching, and interruptions.
+- **Dates** = running total of elapsed working days from day 0, with no waiting. If a wait assumption runs late, the dates listed beside it slip day for day.
 
 ---
 
@@ -310,6 +334,6 @@ All three buckets count **heads-down working days only** — time an engineer is
 
 > Living document. Engineers: log estimate changes here as you uncover more context. PMs: check this table for the most current delivery picture.
 
-| Date | Engineer | Milestone | What changed / Why | Engineering | Operational | Rollout | Wait time |
+| Date | Engineer | Milestone | What changed / Why | Core Eng | Operational | Rollout | Dates affected |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
 | | | | | | | | |
