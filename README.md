@@ -26,6 +26,7 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 | [weekly-eng-report](skills/weekly-eng-report/SKILL.md) | Weekly Engineering Leader report aggregating GitHub PR velocity, Jira sprint health, H2 OKR alignment, and blockers across PAR, DEA, NEV, and MARTECH teams |
 | [team-deployment-frequency](skills/team-deployment-frequency/SKILL.md) | Per-team merged PRs and pooled deployment frequency (DORA-style deploy counts) across all repos a GitHub team touches, plus a weekly PR/deploy correlation scatter chart with Pearson r per team |
 | [incident-postmortem-summary](skills/incident-postmortem-summary/SKILL.md) | Summarizes Datadog incidents under Santosh's teams — root cause, lessons learned, and Jira-enriched action items per incident, plus a cross-incident executive summary |
+| [one-pager-to-spec](skills/one-pager-to-spec/SKILL.md) | Converts a product one-pager into a concise requirements spec with user journey, numbered functional requirements, and a Mermaid end-to-end flowchart |
 
 ## Plugins
 
