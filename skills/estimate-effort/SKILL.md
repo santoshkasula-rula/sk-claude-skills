@@ -214,15 +214,43 @@ Each milestone must:
 - Deliver a concrete, demonstrable artifact
 - Be sequenced so each unblocks the next
 - Map to a specific business value or acceptance criterion from Step 3
-- Break effort into three buckets (never combine):
-  - **Engineering** — coding, design, code review
-  - **Operational** — deployment, infra, config, secrets
-  - **Rollout** — QA, testing, feature flag ramp, stakeholder demo
+- Break **heads-down effort** into three buckets (never combine):
+  - **Engineering** — hands-on design, coding, writing/running tests, debugging
+  - **Operational** — hands-on deployment, infra, config, secrets work
+  - **Rollout** — hands-on QA, test execution, flag changes, preparing the stakeholder demo
 - Carry a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
 
-**Buffer:** 20% added to Engineering total only. Show raw + buffered separately. Never embed inside milestones.
+**Heads-down only.** Effort numbers count only the time an engineer is actively working on the problem. Eliminate all waiting from the effort buckets: PR review queues, approvals, environment or access provisioning, other teams' turnaround, QA queues, flag-ramp soak time, scheduled release windows, and stakeholder sign-off. Those are tracked separately in Step 8b and feed the delivery timeline, never the effort totals.
+
+**Buffer:** 20% added to Engineering heads-down total only. Show raw + buffered separately. Never embed inside milestones.
 
 If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
+
+---
+
+## Step 8b — Wait-time assumptions and delivery timeline
+
+For each milestone, identify the waiting that sits outside heads-down work, grouped by area:
+
+- **Engineering waits** — PR review turnaround, design/architecture review, security review, answers from PM or other teams
+- **Operational waits** — access/environment/secrets provisioning, infra tickets, change-approval windows, release trains
+- **Rollout waits** — QA queue, flag-ramp soak and monitoring periods, UAT, stakeholder sign-off
+
+For each wait give a duration in **calendar days** (or a range), who or what it depends on, and whether it is on the critical path. Use the transcript and RAD to ground these; where nothing is known, state a clearly labeled default assumption (e.g. "assumes 1 day PR review turnaround") rather than leaving it blank. Waits that can overlap with other milestones' heads-down work should be marked parallel, not added.
+
+Present in one message and ask the engineer to correct the numbers:
+
+> **Heads-down effort is only half the story. Here are the waits I'm assuming — these add to delivery time, not effort. Fix anything that's off:**
+>
+> | Milestone | Area | Wait | Assumed duration | Depends on | On critical path? |
+> | :--- | :--- | :--- | :---: | :--- | :---: |
+> | M1 | Engineering | [e.g. PR + security review] | [e.g. 2 days] | [e.g. Platform reviewers] | Yes |
+>
+> Which of these is most likely to be worse than I've guessed?
+
+Wait for response. Update the assumptions.
+
+**Delivery timeline:** total heads-down days (buffered Engineering + Operational + Rollout) **plus** the critical-path wait days = estimated elapsed delivery time. Report heads-down total, critical-path wait total, and the combined delivery timeline separately. Never fold waits into the effort numbers.
 
 ---
 
@@ -230,20 +258,21 @@ If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
 
 Write to `Effort Breakdown Analysis - [Project Name].md` in the current directory, using the actual project name from the documents. Follow `OUTPUT_TEMPLATE.md`. Key rules:
 
-- **Executive Summary** — plain language, no repo names: goal, chosen solution (one sentence), effort totals (raw + buffered), success criteria, risk summary (one sentence if any 🔴 milestone), key assumptions, hard dependencies.
+- **Executive Summary** — plain language, no repo names: goal, chosen solution (one sentence), heads-down effort totals (raw + buffered), critical-path wait total, estimated delivery timeline, success criteria, risk summary (one sentence if any 🔴 milestone), key assumptions, hard dependencies.
 - **Requirements** — use cases, acceptance criteria, success metrics, constraints, in/out of scope.
 - **Solution Options** — one section per candidate with description, repo impact, and key trade-off. Mark the chosen one.
 - **RAD** — every item cites source (PRD, Transcript, or Engineer) and which solution(s) it affects.
 - **Tradeoff Matrix** — the comparison table from Step 6.
 - **Recommendation** — chosen solution, rationale, main risk accepted.
-- **Milestones** — deliverable, business value, Engineering / Operational / Rollout effort, risk flag.
+- **Milestones** — deliverable, business value, Engineering / Operational / Rollout heads-down effort, risk flag.
+- **Wait-Time Assumptions** — per-milestone, per-area table of waits (duration, dependency, critical-path or parallel), plus the delivery timeline calculation (heads-down + critical-path waits).
 - **Technical Breakdown** — one section per repo for the chosen solution, specific files/areas, one-line rationale each.
 - **Cross-repo map** — only if `--root`.
 - **Why These Numbers** — written for PMs and Leadership, not engineers. Explain the reasoning behind the estimates in plain language. Cover four things:
   1. **What the estimate is actually measuring** — name the invisible work specific to this project: which systems needed to be understood before writing a line of code, which integration points required negotiation, why validation overhead is higher than it looks. Avoid generic statements — tie every claim to something concrete from the requirements, RAD, or repo impact analysis.
   2. **Why each milestone is sized the way it is** — one sentence per milestone explaining the dominant sizing factor. If M2 is large because of a legacy system with no test coverage, say that. If M3 rollout is non-trivial because of a phased flag ramp, say that.
   3. **What would make these numbers wrong** — 2–3 specific conditions from the RAD that, if they break, shift the timeline materially. Not generic risks — the actual assumptions this estimate depends on.
-  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand.
+  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand, stating that these are heads-down working days only and that waiting time is shown separately in Wait-Time Assumptions.
 - **Engineer Updates** — empty table, leave for the team.
 
 End with:
