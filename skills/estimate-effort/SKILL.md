@@ -1,303 +1,159 @@
 ---
 name: estimate-effort
-description: Guides engineers through a structured design and estimation process — synthesizes requirements, proposes solution candidates, maps repo impact per solution, surfaces RAD, compares tradeoffs, recommends an approach, then writes a PM-readable implementation plan.
+description: Turns a spec (and its technical structure) into an AI-assisted estimate. Slices work into tasks, sorts each into Bucket A (agent-ready) or Bucket B (human-led), then groups them into milestones with dated plans, wait-time assumptions, and a RAD. Falls back to a lite mode (PRD plus transcript) when no spec exists.
 disable-model-invocation: true
-argument-hint: "[--root]"
-allowed-tools: Read Bash(find *) Bash(ls *) Write
+argument-hint: "[--root] [--lite] [--cards]"
+allowed-tools: Read Bash(find *) Bash(ls *) Bash(git rev-parse *) Write
 ---
 
 # estimate-effort
 
 Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}`.
-If `--root` is in $ARGUMENTS, enable multi-repo discovery in Step 2.
+
+Flags in $ARGUMENTS:
+- `--root`: multi-repo discovery in Step 2.
+- `--lite`: no spec exists. Start from PRD and transcript, and do Step 3b (requirements synthesis and a brief solution check).
+- `--cards`: also write one self-contained Claude Code task card per Bucket A task. Off by default, because cards are implementation detail.
+
+Core idea: shrink the human-led work. Sort every task into A or B, carve A pieces out of B, then turn the sorted tasks into milestones and dates a PM can plan around.
+
+Conventions used throughout:
+- **Evidence tags** on every non-trivial claim: **said**, **inferred**, **assumed**, **from vendor docs**. Check vendor claims against current docs (fetch them); if you cannot, tag **assumed**.
+- **Heads-down engineering time only** in effort and dates. Meetings, alignment, and decision-making are never estimated. Waiting goes in Step 8b.
+- **No blanket AI discount.** AI help shows up as Bucket A review time, not a percentage cut.
+- **Never invent** paths, functions, or commands. Write "not found".
 
 ---
 
-## Step 1 — Collect files
+## Step 1 — Collect inputs
 
-Ask for each file in sequence. Read it before asking for the next.
+Ask for each in turn and read it before asking for the next.
 
-1. **PRD** — "Let's dig in. Drop the path to your PRD or paste the contents directly — whichever is easier." — required, re-ask if unreadable. If a path is given, read the file. If contents are pasted, use them directly.
-2. **Transcript** — "PRDs are the polished story. I want the unpolished one too — the part where someone said 'I'm not sure how long that'll take' or 'we've never touched that service.' Got a Zoom transcript, meeting notes, Slack thread, or any other discussion doc? (path, paste, or skip — but the messier the better)" — if provided, normalize it: strip timestamps, speaker labels, `[inaudible]`, and merge fragmented turns into prose.
-3. **1-pager (if one exists)** — ask for it with the PRD. It informs intent, but the PRD wins on any conflict.
-4. **Additional context** — "Anything else that would embarrass us if we ignored it? Architecture docs, API specs, prior plans, that one Confluence page nobody's updated since 2022? (path, paste, or done)" — repeat until 'done'.
+1. **Spec** (required unless `--lite`): latest version, with requirement IDs if it has them.
+2. **Technical structure**: output of `spec-to-technical-structure`. If missing, say confidence is lower and offer to run that skill first.
+3. **Mocks** (optional, for UI work): reference screens by name.
+4. **Transcript or discussion notes**: "The part where someone said 'I'm not sure how long that'll take' counts. Path, paste, or skip." Normalize it: strip timestamps, speaker labels, `[inaudible]`.
+5. **Context**: team size, test and CI conventions, feature flag system, definition of done, anything Claude Code must never touch.
+6. **More**: "Anything else that would embarrass us if we ignored it? (path, paste, or done)". Repeat until done.
 
----
+If the spec and a 1-pager disagree, the spec wins. Transcript anxiety markers override optimism on the same component.
 
-## Step 2 — Repo discovery (only if `--root`)
+## Step 2 — Repo discovery
 
+If `--root`:
 ```bash
 find . -maxdepth 3 \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" -o -name "Cargo.toml" -o -name "pom.xml" \) ! -path "*/node_modules/*" ! -path "*/.git/*"
 ```
 
-Identify each service and any cross-repo shared dependencies.
+Always check for a git root (`git rev-parse --show-toplevel`). If inside a repo, read the manifests that exist (`package.json`, `go.mod`, `docker-compose.yml`, `requirements.txt`, `pyproject.toml`) and list internal services only. Confirm in one message:
 
----
+> **I found these internal services. Which are coming along for the ride?**
+> - `[service]` — [inferred purpose]
 
-## Step 2b — Dependency discovery (always)
+Wait for the reply. If no git root, skip silently.
 
-Detect whether running inside a real repo:
+## Step 3 — Ground it in the code
 
-```bash
-git rev-parse --show-toplevel 2>/dev/null && basename $(git rev-parse --show-toplevel)
-```
+For every task you will propose, find and record:
+- Files and modules it touches (paths).
+- An **existing pattern to follow**, with its path. No precedent is a signal toward Bucket B or a spike.
+- How tests are written and run (discover from package.json, Makefile, CI config; do not guess commands).
+- How feature flags, config, and migrations are done.
 
-If inside a repo, read the relevant manifest(s) — use only what exists:
-- `package.json` → `dependencies` + `devDependencies` + `workspaces`
-- `go.mod` → `require` block
-- `docker-compose.yml` / `docker-compose.yaml` → `services` keys
-- `requirements.txt` or `pyproject.toml` → top-level package names
+If you cannot read the repos, say so and lower confidence.
 
-Extract internal services only (signals: org-scoped packages, docker-compose services, local `replace` directives). Present and confirm in one message:
+## Step 3b — Requirements check (only if `--lite` or the spec is thin)
 
-> **Alright, I poked around and found these internal services. Which ones are coming along for the ride?**
->
-> - `[service-name]` — [inferred purpose]
-> - *(nothing internal detected — I'll ask you directly later)*
+Extract use cases, acceptance criteria, success metrics, scope in and out, constraints. Tag each with evidence. Present one summary:
 
-Wait for response. Record confirmed services — they seed the repo impact analysis and RAD.
-If no git root found: skip silently.
+> **Here's what I think we're building. Fight me on anything wrong:** [use cases, AC, metrics, constraints, out of scope]
 
----
+Ask at most one question. Then, in lite mode only, give a **brief** solution check: 2 candidate approaches with one line each on touches and risk, a recommendation, and why. In normal mode, take the approach from the technical structure and do not re-litigate it.
 
-## Step 3 — Requirements synthesis
+## Step 4 — Slice into tasks
 
-**From all documents**, extract and consolidate. Use exact terminology from the source materials.
+Smallest units that each deliver a testable result and fit one PR. Slice vertically where you can, horizontally where you must (shared types, schema). One-sentence goals; if it needs more, it is two tasks. Every task traces to spec IDs (and a mock screen if UI). Separate "build" and "verify". Decisions are not tasks: list them as open decisions (prerequisites) with an owner, and do not size them.
 
-Extract:
-- **Use cases** — who does what, and why (actor + action + goal)
-- **User stories** — if present verbatim; otherwise infer from PRD features and transcript context
-- **Acceptance criteria** — explicit "done" conditions stated in any document
-- **Success metrics** — measurable outcomes the PRD ties to the feature
-- **Scope** — features explicitly in scope; features explicitly out of scope
-- **Constraints** — non-negotiables (compliance, performance targets, existing contracts)
+Name each task by the functionality it delivers, in plain language a PM could read ("Users can save a payment method at checkout"), not by file or layer. Put the technical detail (files, pattern to follow, data or API change, tests) in a bulleted list under the task.
 
-**Conflict rules:** If a 1-pager and a PRD disagree, the **PRD wins**. Transcript anxiety markers override PRD optimism on the same component — always.
+Also create **Operational** tasks (setup, infra, access, config, secrets) and **Rollout** tasks (reconciliation, UAT preparation and execution, training material). Count hands-on work only; leave out meetings, demo sessions, and alignment.
 
-**Evidence tags:** tag each extracted item as **said**, **inferred**, **assumed**, or **from vendor docs** so later steps can show where every number came from.
+## Step 5 — Classify: the Bucket A gate
 
-Present a consolidated requirements summary and ask one targeted question if anything critical is missing or ambiguous:
+A build task is **Bucket A only if all eight are true**; otherwise it is Bucket B (or split until the A part passes).
 
-> **Here's what I think we're actually building — fight me on anything that's wrong:**
->
-> **Use cases:**
-> - [Actor] needs to [action] so that [goal]
-> - ...
->
-> **Acceptance criteria:** [list, or "not stated — what does shipped actually mean here?"]
-> **Success metrics:** [list, or "not stated — how will anyone know this worked?"]
-> **Constraints:** [list, or "none identified — lucky you"]
-> **Out of scope:** [list, or "not explicit — what are we quietly agreeing NOT to build?"]
->
-> [One question if a critical use case or constraint seems missing — otherwise skip]
+1. **Unambiguous**: no open question, ASSUMED item, or undecided decision affects it.
+2. **Pattern exists**: a close precedent in the repo, cited by path.
+3. **Small and contained**: one layer, one service, about 8 files or fewer, reviewable in under 30 minutes.
+4. **Testable**: automated tests or a concrete command can check it.
+5. **Reversible and safe**: additive, behind a flag, no destructive migration or public contract change.
+6. **Not high-judgment**: not authorization, encryption or secrets, PHI handling or logging, consent, money or billing, audit-trail semantics, or compliance rules.
+7. **No missing inputs**: no credentials, vendor decision, missing design, or other team's unfinished work.
+8. **Self-contained**: doable from the task description plus the repo.
 
-Wait for response. Lock the requirements before proceeding.
+Record which gates failed for every B item. Mark `A*` for tasks that pass but sit next to sensitive code, and say what the reviewer must check. Sensitive logic itself is always B. Operational and Rollout tasks are human work and are not sorted into A.
 
----
+## Step 6 — Shrink Bucket B
 
-## Step 4 — Solution options
+For each B item: carve out A tasks (types, additive migration scaffolding, stubs, fixtures, tests written from the spec, UI shells, API client wiring, docs); state the **human core**; state the **unlock** (the decision that would turn it into A); suggest how human and Claude Code collaborate.
 
-Based on the confirmed requirements and any codebase context from Steps 2/2b, propose **2–3 candidate solutions**. Each solution is a distinct functional design — a meaningfully different architectural or implementation approach, not just a scope variation.
+## Step 7 — RAD and execution order
 
-For each solution:
-- Give it a short name (e.g. "Extend existing service", "New dedicated service", "Client-side with API contract")
-- One sentence: what it does and how it addresses the requirements
-- Key repo/service areas it would touch (high-level, before deep analysis)
-- One-line effort hint: rough complexity signal (e.g. "lower risk, more scope", "faster to build, harder to maintain")
+Present a pre-filled RAD and up to 3 targeted questions in one message:
 
-> **Here are the ways we could tackle this — I have opinions, but let's see what resonates:**
->
-> **Option A — [Name]**
-> [What it is and how it solves the problem]
-> Touches: [service/repo list]
-> Vibe: [effort/risk hint — e.g. "lower risk but more moving parts", "fast to ship, future-you will have thoughts"]
->
-> **Option B — [Name]**
-> [What it is and how it solves the problem]
-> Touches: [service/repo list]
-> Vibe: [effort/risk hint]
->
-> **Option C — [Name]** *(if warranted)*
-> ...
->
-> Which direction are you leaning? If you've already got something in mind that I missed, throw it in.
+> **Here's the RAD. Fix anything that's wrong:** Risks / Assumptions / Dependencies / Success criteria, each with source.
 
-Wait for response. Record the confirmed solution set — proceed only with solutions the engineer validates. If they propose their own approach, add it and drop any that are clearly off the table.
+Pick questions that would change the estimate (most-likely-to-blow-up area, what must quietly be true, outside teams who must say yes, what people will assume is in scope, new-ground work). Never ask more than 3, never re-ask what documents answered. Wait, then update the RAD.
 
----
+Then plan execution: dependency graph grouped into waves; tasks in a wave must not edit the same files; unblocking work first; open decisions listed as prerequisites with owners, not sized; name the critical path.
 
-## Step 4b — Repo impact per solution
+## Step 8 — Estimate, milestones, dates
 
-For each confirmed solution, map the specific changes needed across repos and services. If inside a codebase, scan relevant areas using `find`, `ls`, and `Read`. Otherwise, ask the engineer directly.
+**Task sizing**
+- Bucket A: XS (one file, about 5 min review), S (about 3 files, 10 to 15 min), M (about 8 files, 20 to 30 min). Bigger than M, split. Report review time plus a rework allowance (for example "S: 15 min, 30% chance of one revision").
+- Bucket B: S 1 to 2 days, M 3 to 5, L 6 to 10, XL over 10 (split or spike first). Give a range, a confidence, and what would tighten it.
+- Operational and Rollout: days, with a range where uncertain.
 
-For each solution, produce:
+**Milestones.** 3 to 5 incremental milestones (no Discovery milestone, since scoping and alignment are not estimated), each putting something usable in a named stakeholder's hands, tied to an acceptance criterion, each unblocking the next. Use the documents' own language, no generic placeholders.
 
-> **[Solution Name] — what actually has to change:**
-> - `[repo/service]`: [what changes — e.g. "new API endpoint", "schema migration", "config update"]
-> - `[repo/service]`: [what changes]
-> - Blast radius: [narrow / moderate / broad]
+**Per milestone, three separate buckets:**
+- **Core Engineering**: A review time (converted to days) plus B days: design, code, review, tests, debugging.
+- **Operational** and **Rollout**: as above.
 
-If a solution touches a repo or service that wasn't in the confirmed list from Step 2b, flag it:
-> *"Heads up — [Solution X] would drag [service] into this too. Is that in scope, or do we need to rethink?"*
+**Buffer.** 20% on the Core Engineering B portion only, shown as its own column. Bucket A already carries a rework allowance. Never buffer Operational or Rollout.
 
-Record all confirmed repo impacts — they feed the RAD and the Technical Breakdown.
+**Focused to calendar.** Focused days = Core Eng + buffer + Operational + Rollout. Calendar days = focused ÷ 0.7 (state this as an assumption to calibrate). Effort stays focused-only: meetings, alignment, and decisions are not estimated as work, and the 0.7 factor is only the conversion to calendar time.
 
----
+**Dates.** One planning date per milestone as a running total of calendar working days from day 0, with the underlying range shown beside it. No T-shirt sizes. Every file written uses the same dates.
 
-## Step 5 — RAD thought-partner
+**Confidence and risk flag** per milestone: High, Medium, or Low, and 🔴 (anxiety marker or RAD risk), 🟡 uncertain, 🟢 well understood.
 
-With requirements locked and solutions mapped, surface risks, assumptions, and dependencies. Some items will apply to all solutions; some are solution-specific — label them.
+**Bottom-up task table** behind the milestones: task, bucket (A, A*, B, Ops, Rollout), focused days, basis with evidence tag, certainty. Task totals must reconcile to milestone bucket totals; show the reconciliation and fix any mismatch.
 
-Present a pre-filled RAD draft and 2–3 targeted questions in one message:
-
-> **Here's the RAD — the stuff that keeps estimates honest. Fix anything that's wrong:**
->
-> **Risks:** [list with source and which solution(s) it affects]
-> **Assumptions:** [list with source — aka "things we're betting on being true"]
-> **Dependencies:** [list — note if a dependency is only triggered by a specific solution]
-> **Success criteria:** [from Step 3, or "still fuzzy — how will you actually know this is done?"]
-
-Then ask 2–3 targeted questions — pick the ones that would genuinely change the estimate:
-
-- If a solution touches legacy or unfamiliar code: *"What's the part of [Solution X] most likely to blow up the timeline — and has anyone on the team actually been in that code recently?"*
-- If assumptions are thin: *"What has to quietly be true for any of these estimates to hold? What's the thing nobody's said out loud yet?"*
-- If external coordination is needed: *"Who outside your team needs to say yes or do work for each option — and have you talked to them?"*
-- If scope boundaries are unclear: *"What's the thing someone will definitely assume is in scope, that we haven't agreed to build?"*
-- If a solution is new ground: *"Has your team shipped something like [Solution X] before, or is this 'we'll figure it out as we go' territory?"*
-
-**Rules:**
-- Never ask more than 3 questions.
-- Never re-ask what documents already answered.
-- If the engineer raises a new risk, follow up once: *"What's the move to make that less scary?"* then move on.
-
-Wait for response. Update RAD before continuing.
-
----
-
-## Step 6 — Tradeoff analysis
-
-Compare all confirmed solutions across the dimensions that matter most given the RAD. Present as a structured comparison — not a generic pros/cons list, but grounded in the specific requirements, risks, and repo impacts identified.
-
-> **The showdown — let's see how these options actually stack up:**
->
-> | | [Solution A] | [Solution B] | [Solution C] |
-> | :--- | :--- | :--- | :--- |
-> | **Effort** | [Low/Med/High — brief reason] | ... | ... |
-> | **Risk exposure** | [RAD items it inherits] | ... | ... |
-> | **Blast radius** | [breadth of change] | ... | ... |
-> | **Covers all requirements** | Yes / Partially — [gap] | ... | ... |
-> | **Future-you will thank you?** | [maintainability signal] | ... | ... |
-> | **The thing you give up** | [key trade-off] | ... | ... |
-
-Follow the table with 2–3 sentences of honest narrative — what the table can't capture (team familiarity, how reversible this is, sequencing landmines).
-
----
-
-## Step 7 — Recommendation
-
-Based on the requirements, RAD, and tradeoff analysis, propose one solution as the recommended approach. Be direct — don't hedge if the data points clearly to one option.
-
-> **My call: [Solution Name]**
->
-> [2–3 sentences: why this option wins given what we know — requirements, constraints, risks, and the team that actually has to build it. Name the trade-off being accepted, without apologizing for it.]
->
-> *The honest risk: [one sentence about what could still bite us.]*
->
-> Does this land, or is there something pulling you toward a different option?
-
-If the engineer pushes back, ask: *"What's the pull toward [other option] — is there a constraint we haven't put on the table?"* Record their reasoning, accept their call, and move on without relitigating it.
-
----
-
-## Step 8 — Design milestones and dates
-
-Plan as an engineering manager who has to defend the numbers. Start with a **Discovery** milestone (M0), then create 3–5 incremental milestones for the **chosen solution**. Use the language from the documents — names, deliverables, and business value must reflect the actual words and goals from the PRD, transcript, and requirements synthesis. No generic placeholders.
-
-**Discovery (M0):** capped at **2 working days**, no buffer. Its date is the day 0 → day ≤2 starting point for all other milestones.
-
-Each milestone after M0 must:
-- Be **incremental** — put something usable in a named stakeholder's hands, not just an internal checkpoint
-- Be sequenced so each unblocks the next
-- Map to a specific business value or acceptance criterion from Step 3
-- Break **focused effort** into three buckets, always in separate columns, never combined:
-  - **Core Engineering** — design, code, review, writing/running tests, debugging
-  - **Operational** — setup, infra, access, config, secrets (hands-on work)
-  - **Rollout** — demos, reconciliation, UAT, training (hands-on work)
-- Carry a confidence level (**High / Medium / Low**) and a risk flag: 🔴 anxiety-marker or RAD risk · 🟡 uncertain · 🟢 well-understood
-
-**Buffer:** add 20% to Core Engineering only. Show it as its own column. Never hide it inside milestone numbers and never apply it to Operational, Rollout, or Discovery.
-
-**Focused days → elapsed days:** per milestone, focused days = Core Engineering + 20% buffer + Operational + Rollout. Divide by a **65% focus factor** to get elapsed working days (meetings, context switching, and interruptions). Show both.
-
-**Dates:** give each milestone **one date** as a running total of elapsed working days from day 0 (e.g. "Day 14"). No ranges. No T-shirt sizes (S/M/L). Every file you write must use these same dates.
-
-**Heads-down only.** Dates and effort contain only time an engineer is actively working. Waiting never goes into them: reviews (Legal, Security, architecture), vendor replies, access provisioning, sign-offs, pilot runs, QA queues, flag-ramp soak time, release windows. These are listed as assumptions in Step 8b.
-
-**AI-assisted workflow, no blanket discount.** Assume Claude drafts code and tests where tooling makes that practical, but do not apply a flat percentage reduction. For each milestone show where human review and judgment still cost time (clarifying requirements, choosing the approach, reviewing generated work, validating behavior, integration and security checks) and keep that time inside Core Engineering or Rollout.
-
-**Evidence tags.** Tag every non-trivial claim, task basis, and assumption as **said** (stated in a document or by the engineer), **inferred** (reasoned from what was said), **assumed** (no source, our bet), or **from vendor docs**. Check vendor claims against their current docs, not memory — fetch the docs; if you cannot, tag the claim **assumed** and say so.
-
-**Bottom-up task table.** Build a task-level table behind the milestones: task, focused days, basis (with evidence tag), certainty (High / Medium / Low). The task totals must reconcile to the milestone bucket totals; show the reconciliation explicitly (task sum = milestone sum per bucket) and fix any mismatch before continuing.
-
-If `--root`: assign tasks to repos, sequence to respect cross-repo dependencies.
-
----
+**Totals to report:** task counts by A, A*, B; share in A by count and by effort; A review hours; B day range; excluded items; and the effect of unresolved decisions ("if D-2 resolves as X, N tasks move B to A").
 
 ## Step 8b — Wait-time assumptions
 
-Waiting is **not** in the dates. Identify it, per milestone and area, as an assumption:
+Waiting is **not** in effort or dates. List, per milestone: PR review turnaround, Legal/Security/architecture review, access and environment provisioning, vendor replies, QA queue, pilot runs, flag-ramp soak, UAT scheduling, sign-off. For each give assumed working days, who it depends on, an evidence tag, and which milestone dates slip day for day if it runs late. State a labeled default where nothing is known. Call out that **review delays (Legal, Security) are the biggest schedule risk**.
 
-- **Core Engineering waits** — PR review turnaround, Legal/Security/architecture review, answers from PM or other teams
-- **Operational waits** — access/environment/secrets provisioning, infra tickets, change-approval windows, vendor replies, release trains
-- **Rollout waits** — QA queue, pilot runs, flag-ramp soak and monitoring, UAT scheduling, stakeholder sign-off
+> **These waits are not in the dates. Each says what slips if it's late. Fix anything off:** [table]
 
-For each wait give: the assumed duration in working days, who or what it depends on, an evidence tag, and **which milestone dates slip day for day if it runs late** (a late wait on M1 slips M1 and every later milestone). Where nothing is known, state a clearly labeled default (e.g. "assumes 1 day PR review turnaround, assumed") rather than leaving it blank. Call out that **review delays (Legal, Security) are the biggest schedule risk** and name the ones that apply.
+Wait, then update. Also report an expected-wait scenario as a separate line, never replacing the plan dates. Assign confidence per milestone and overall.
 
-Present in one message and ask the engineer to correct the numbers:
+## Step 9 — Write the output
 
-> **These waits are not in the dates — they're the assumptions the dates depend on. Each one says what slips if it's late. Fix anything that's off:**
->
-> | Milestone | Wait | Assumed duration | Depends on | Evidence | Dates that slip day for day |
-> | :--- | :--- | :---: | :--- | :---: | :--- |
-> | M1 | [e.g. Security review] | [e.g. 3 days] | [e.g. Security team] | assumed | M1, M2, M3 |
->
-> Which of these is most likely to be worse than I've guessed? Review delays are usually the biggest risk — are Legal or Security already in the loop?
+Write `Effort Breakdown Analysis - [Project Name].md` in the current directory following `OUTPUT_TEMPLATE.md`. Tasks go in the Tasks section grouped by milestone: a functional title, then a bulleted technical-work list, then size and AI-assisted split. Keep the document lean; there is no per-repo breakdown or rationale essay, because the technical detail lives in each task. If `--cards`, also write `tasks/A-<nn>-<slug>.md` per Bucket A task: goal, context, files and pattern path, steps, checkable acceptance criteria, exact test commands, guardrails (additive only, no PHI or real names in fixtures, behind a flag), human review focus. Cards must work pasted into a fresh Claude Code session.
 
-Wait for response. Update the assumptions.
+**Mermaid.** Use Mermaid in every markdown file. Labels short, no parentheses, no line breaks inside labels. Whenever you produce a visual, also export it to a standalone HTML file next to the markdown.
 
-**Delivery view:** the dates are the plan if every wait is zero. Also report the expected-wait scenario (dates plus the sum of assumed waits that fall on the path) as a separate line, never as a replacement for the plan dates.
+**Calibration.** End the document with a short plan: after wave 1, record actual agent time, review time, rework passes, and tasks that bounced to B, then re-run the estimate. First numbers are assumptions.
 
-**Confidence:** assign a confidence level per milestone and an overall level, based on task certainty, the number of Low-certainty tasks, and the number of wait assumptions the milestone depends on.
+**Safety.** Read repos only. Never claim tests pass without running them. Healthcare and compliance-sensitive areas default to Bucket B.
 
----
-
-## Step 9 — Write output file
-
-Write to `Effort Breakdown Analysis - [Project Name].md` in the current directory, using the actual project name from the documents. Follow `OUTPUT_TEMPLATE.md`. Key rules:
-
-- **Executive Summary** — plain language, no repo names: goal, chosen solution (one sentence), focused effort totals per bucket (Core Engineering raw + 20% buffer, Operational, Rollout), elapsed working days (÷ 65% focus factor), final milestone date, overall confidence, success criteria, risk summary (one sentence; state that review delays are the biggest risk), key assumptions, hard dependencies.
-- **Requirements** — use cases, acceptance criteria, success metrics, constraints, in/out of scope.
-- **Solution Options** — one section per candidate with description, repo impact, and key trade-off. Mark the chosen one.
-- **RAD** — every item cites source (PRD, Transcript, or Engineer) and which solution(s) it affects.
-- **Tradeoff Matrix** — the comparison table from Step 6.
-- **Recommendation** — chosen solution, rationale, main risk accepted.
-- **Milestones** — M0 Discovery plus incremental milestones: what the stakeholder can use, Core Engineering / Buffer / Operational / Rollout in separate columns, focused days, elapsed days, one running-total date, confidence, risk flag. Include a Mermaid timeline or flowchart of milestones and dates.
-- **Bottom-up Task Table** — task, focused days, basis (evidence-tagged), certainty; plus an explicit reconciliation to the milestone totals.
-- **Wait-Time Assumptions** — waits per milestone with duration, dependency, evidence tag, and which dates slip day for day if late. Review delays called out as the biggest risk. Waits are never in the dates.
-- **AI-assisted workflow notes** — where human review and judgment still cost time; no blanket discount.
-- **Technical Breakdown** — one section per repo for the chosen solution, specific files/areas, one-line rationale each.
-- **Cross-repo map** — only if `--root`.
-- **Why These Numbers** — written for PMs and Leadership, not engineers. Explain the reasoning behind the estimates in plain language. Cover four things:
-  1. **What the estimate is actually measuring** — name the invisible work specific to this project: which systems needed to be understood before writing a line of code, which integration points required negotiation, why validation overhead is higher than it looks. Avoid generic statements — tie every claim to something concrete from the requirements, RAD, or repo impact analysis.
-  2. **Why each milestone is sized the way it is** — one sentence per milestone explaining the dominant sizing factor. If M2 is large because of a legacy system with no test coverage, say that. If M3 rollout is non-trivial because of a phased flag ramp, say that.
-  3. **What would make these numbers wrong** — 2–3 specific conditions from the RAD that, if they break, shift the timeline materially. Not generic risks — the actual assumptions this estimate depends on.
-  4. **How to read the effort buckets** — one-sentence definition of Engineering / Operational / Rollout days in terms a non-engineer will understand, stating that these are focused working days only and that waiting time is shown separately in Wait-Time Assumptions. Also explain the 20% buffer and the 65% focus factor in one sentence each.
-- **Engineer Updates** — empty table, leave for the team.
-
-**Mermaid:** use Mermaid diagrams in every markdown file you write. Keep labels short, with no parentheses and no line breaks inside labels.
-
-**Consistency check (final step):** before finishing, re-read every file written and confirm milestone dates, bucket totals, buffer, elapsed days, confidence levels and wait assumptions match the final plan exactly. Fix or remove any stale dates or numbers in other files.
+**Consistency check (final step).** Re-read every file written. Confirm milestone dates, bucket totals, buffer, calendar days, confidence, and wait assumptions match exactly. Fix stale numbers.
 
 End with:
 > **Share with PMs / leadership:** Executive Summary, Requirements, Recommendation, Milestones
 > **Share with engineers:** full document
+
+Then reply in chat with the file locations, the headline (task counts, share in A, review hours, B day range, final date), the top 3 decisions that would move the most work to A, the first wave ready to start, and what you were least sure about.

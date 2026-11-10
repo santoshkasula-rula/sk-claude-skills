@@ -10,16 +10,16 @@
 
 - [Executive Summary](#executive-summary)
 - [Requirements](#requirements)
-- [Solution Options](#solution-options)
+- [Approach](#approach)
+- [Decisions That Unlock the Most Work](#decisions-that-unlock-the-most-work)
 - [RAD Analysis](#rad-analysis)
-- [Tradeoff Matrix](#tradeoff-matrix)
-- [Recommendation](#recommendation)
+- [Execution Plan](#execution-plan)
+- [Tasks](#tasks)
 - [Milestones](#milestones)
 - [Bottom-up Task Table](#bottom-up-task-table)
 - [Wait-Time Assumptions](#wait-time-assumptions)
-- [Technical Breakdown](#technical-breakdown)
-- [Why These Numbers](#why-these-numbers-estimation-rationale)
-- [Engineer Updates](#engineer-updates)
+- [Calibration Plan](#calibration-plan)
+- [What I Could Not Verify](#what-i-could-not-verify)
 
 ---
 
@@ -35,12 +35,13 @@
 | **Chosen Approach** | [Solution name — one sentence on what it is] |
 | **Success Criteria** | [How we'll know this is done] |
 | **Business Systems Affected** | [Plain-language names — e.g. Checkout Flow, Payment Processing] |
+| **Work Sorted** | [N tasks: x agent-ready (A), y A with focused review (A*), z human-led (B). Share in A: __% by count, __% by effort] |
 | **Core Engineering** | [X days raw] + [Y days 20% buffer] = [Z days] |
 | **Operational** | [X days — setup, infra, access] |
 | **Rollout** | [X days — demos, reconciliation, UAT, training] |
 | **Total Focused Days** | [Core Engineering incl. buffer + Operational + Rollout] |
-| **Elapsed Working Days** | [Total focused ÷ 0.65 focus factor] |
-| **Final Milestone Date** | [Day N — running total of working days from day 0; excludes waiting] |
+| **Calendar Working Days** | [Total focused ÷ 0.7 focus factor] |
+| **Final Milestone Date** | [Day N — running total of calendar working days from day 0; excludes waiting and decision time] |
 | **Overall Confidence** | [High / Medium / Low] |
 | **Risk Summary** | [One sentence. Review delays (Legal, Security) are the biggest schedule risk — see Wait-Time Assumptions. e.g. "One milestone also carries high risk due to legacy auth layer."] |
 | **Key Assumptions** | [e.g. "Staging access available; v2 payments endpoint is idempotent"] |
@@ -85,66 +86,53 @@
 
 ---
 
-## Solution Options
+## Approach
 
-> Each option is a distinct functional design. The chosen approach is marked.
+> Taken from the technical structure. In `--lite` mode, a brief solution check instead (two candidates, one recommendation).
 
-### Option A — [Name] ✅ *(Chosen)*
-
-[2–3 sentences: what this solution does and how it addresses the requirements.]
+**Chosen approach:** [Name and one sentence.]
+**Source:** [Technical structure v__ / lite-mode solution check]
+**Main risk accepted:** [One honest sentence.]
 
 **Repo / service impact:**
 - `[repo/service]` — [what changes]
-- `[repo/service]` — [what changes]
 
-**Key trade-off:** [The main thing accepted with this approach]
+*(Lite mode only)* **Alternative considered:** [Name, one line, why not chosen.]
 
 ---
 
-### Option B — [Name]
+## Decisions That Unlock the Most Work
 
-[2–3 sentences: what this solution does and how it addresses the requirements.]
+> Open decisions are prerequisites. They carry no estimated time; meetings and alignment are outside this estimate.
 
-**Repo / service impact:**
-- `[repo/service]` — [what changes]
-
-**Key trade-off:** [The main thing accepted with this approach]
-
----
-
-### Option C — [Name] *(if applicable)*
-
-[Description]
-
-**Repo / service impact:**
-- `[repo/service]` — [what changes]
-
-**Key trade-off:** [The main thing accepted]
+| Decision | Spec ID | Tasks it moves from B to A | Who decides | Needed by wave |
+| :--- | :---: | :---: | :--- | :---: |
+| [e.g. D-2: sync vs async send] | R-4 | [N] | [PM / Eng] | 1 |
 
 ---
 
 ## RAD Analysis
 
-> The "no surprises" section. Source column shows where each item came from. Solution column shows which option(s) it affects.
+> The "no surprises" section. Source column shows where each item came from. Tasks column shows which tasks it affects.
 
 ### Risks
 
-| Risk | Source | Solution(s) Affected | Affected Milestone | Mitigation |
+| Risk | Source | Tasks Affected | Affected Milestone | Mitigation |
 | :--- | :---: | :---: | :---: | :--- |
-| [Description] | Transcript / PRD / Engineer | A / B / All | M[N] | [Concrete step — e.g. "Spike 1 day on legacy auth before M1 is locked"] |
+| [Description] | Transcript / Spec / Engineer | [IDs] | M[N] | [Concrete step — e.g. "Spike 1 day on legacy auth before M1 is locked"] |
 
 ### Assumptions
 
-| Assumption | Source | Solution(s) Affected | Owner | Must be confirmed by |
+| Assumption | Source | Tasks Affected | Owner | Must be confirmed by |
 | :--- | :---: | :---: | :--- | :--- |
 | [e.g. "Staging environment accessible to all engineers"] | Engineer | All | Platform team | Before M1 start |
 
 ### Dependencies
 
-| Dependency | Type | Source | Solution(s) Affected | Blocks | Status |
+| Dependency | Type | Source | Tasks Affected | Blocks | Status |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| [e.g. `billing-engine` schema migration complete] | Internal | Transcript | A, B | M2 | Waiting |
-| [e.g. Stripe API key rotation approved] | External | Engineer | A | M3 | Pending |
+| [e.g. `billing-engine` schema migration complete] | Internal | Transcript | [IDs] | M2 | Waiting |
+| [e.g. Stripe API key rotation approved] | External | Engineer | [IDs] | M3 | Pending |
 
 ### Out of Scope (confirmed)
 
@@ -152,51 +140,77 @@
 
 ---
 
-## Tradeoff Matrix
+## Execution Plan
 
-> Comparison of all solution options across the dimensions that matter for this project.
+> Waves run in parallel. Tasks in a wave must not edit the same files. Open decisions are prerequisites and are not sized.
 
-| | [Option A] | [Option B] | [Option C] |
-| :--- | :--- | :--- | :--- |
-| **Effort** | [Low/Med/High — brief reason] | ... | ... |
-| **Risk exposure** | [RAD items inherited] | ... | ... |
-| **Repo impact breadth** | [Narrow / Moderate / Broad] | ... | ... |
-| **Meets all requirements** | Yes / Partially — [gap] | ... | ... |
-| **Long-term maintainability** | [signal] | ... | ... |
-| **Key trade-off** | [what you give up] | ... | ... |
+```mermaid
+flowchart LR
+    D[Decisions] --> W1[Wave 1 shared types and tests]
+    W1 --> W2[Wave 2 features]
+    W2 --> W3[Wave 3 wiring and rollout]
+```
 
-[2–3 sentences of narrative: what the table doesn't capture — team familiarity, reversibility, sequencing implications.]
+| Wave | Tasks | File ownership | Notes |
+| :---: | :--- | :--- | :--- |
+| 1 | [IDs] | [paths] | [critical path / overlaps resolved] |
+
+**Critical path:** [tasks], shortened by [what].
 
 ---
 
-## Recommendation
+## Tasks
 
-**Chosen approach: [Option Name]**
+> Each task is written as what a person can do or what the product does, followed by the technical work as bullets. Grouped by milestone. Bucket A tasks size by review time; Bucket B tasks size in days. Task cards are written only with `--cards`.
 
-[2–3 sentences: why this solution best fits the requirements given the constraints, risks, and team context. Be direct about the trade-off being accepted.]
+### M1 — [Milestone name]
 
-**Main risk accepted:** [One honest sentence about what could still go wrong.]
+#### A-01 — [Plain-language functionality, e.g. "Users can save a payment method at checkout"]
+
+**Traces to:** R-1 · **Bucket:** A · **Wave:** 1 · **Depends on:** none
+**Size:** S · **Review time:** 15 min · **Rework allowance:** 30%, one pass
+
+**Technical work:**
+- [e.g. Add `savePaymentMethod` handler in `src/api/payments.ts`, following `src/api/addresses.ts`]
+- [e.g. Additive migration for `payment_methods` table, behind flag `save_card`]
+- [e.g. Unit tests per the existing Jest pattern in `src/api/__tests__/`]
+
+**Reviewer checks:** [Only for A*: what a human must look at.]
+
+#### B-01 — [Plain-language functionality, e.g. "Saved cards are only visible to their owner"]
+
+**Traces to:** R-4 · **Bucket:** B · **Wave:** 2 · **Depends on:** A-01
+**Size:** M, 3 to 5 days · **Confidence:** Medium
+
+**Technical work:**
+- [e.g. Authorization check in the payments read path]
+- [e.g. Audit-log entry on access]
+
+**AI-assisted split:**
+- **Why it's B:** [failed gates]
+- **Human core:** [the one decision or logic only a person should own]
+- **Claude can draft:** [carved-out A task IDs or pieces, e.g. fixtures, tests from the spec]
+- **Unlock:** [decision that would make it A]
+- **Would tighten the estimate:** [what]
 
 ---
 
 ## Milestones
 
-> Each milestone puts something usable in a named stakeholder's hands. Effort is **focused working days only**: no waiting. Dates are a running total of elapsed working days from day 0 and exclude waiting; see [Wait-Time Assumptions](#wait-time-assumptions). Evidence tags: **said** · **inferred** · **assumed** · **from vendor docs**.
+> Each milestone puts something usable in a named stakeholder's hands. Effort is **focused working days only**: no waiting. Dates are a running total of calendar working days (focused ÷ 0.7) from day 0 and exclude waiting and decision time; see [Wait-Time Assumptions](#wait-time-assumptions). Evidence tags: **said** · **inferred** · **assumed** · **from vendor docs**.
 
-| # | Milestone | Usable by [stakeholder] | AC met | Core Eng | Buffer 20% | Operational | Rollout | Focused days | Elapsed days | Date | Confidence | Risk |
+| # | Milestone | Usable by [stakeholder] | AC met | Core Eng | Buffer 20% | Operational | Rollout | Focused days | Calendar days | Date | Confidence | Risk |
 | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| M0 | Discovery | [Decisions and scope locked] | n/a | [X, max 2 total] | none | n/a | n/a | [X] | [X] | Day [N] | High/Med/Low | 🟢 |
-| M1 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.65] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
-| M2 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.65] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
+| M1 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.7] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
+| M2 | [Name] | [What they can use] | [AC] | [X] | [0.2X] | [Y] | [Z] | [sum] | [sum ÷ 0.7] | Day [N] | High/Med/Low | 🔴/🟡/🟢 |
 
-**Totals:** Core Engineering [raw] + [buffer] = [Z] · Operational [sum] · Rollout [sum] · Focused [sum] · Elapsed [sum ÷ 0.65] · **Final date: Day [N]** · **Overall confidence: [level]**
+**Totals:** Core Engineering [raw] + [buffer] = [Z] · Operational [sum] · Rollout [sum] · Focused [sum] · Calendar [sum ÷ 0.7] · **Final date: Day [N]** · **Overall confidence: [level]**
 
 **Risk legend:** 🔴 High · 🟡 Medium · 🟢 Low
 
 ```mermaid
 flowchart LR
-    M0[M0 Discovery Day 2] --> M1[M1 Name Day N]
-    M1 --> M2[M2 Name Day N]
+    M1[M1 Name Day N] --> M2[M2 Name Day N]
     M2 --> M3[M3 Name Day N]
 ```
 
@@ -204,15 +218,17 @@ flowchart LR
 
 No blanket discount is applied. Where Claude drafts code and tests, human time still goes to: [e.g. clarifying requirements, choosing the approach, reviewing generated work, validating behavior, security and integration checks, with the milestones affected].
 
+**How to read the buckets:** all three count focused working days only. Core Engineering is design, code, review, tests and debugging. The 20% buffer applies to Core Engineering only. Operational and Rollout are hands-on work only. Meetings, alignment, and decision-making are not estimated as work; open decisions are listed as prerequisites. Calendar days are focused days ÷ 0.7, which only converts effort to calendar time.
+
 ---
 
 ## Bottom-up Task Table
 
 > The task-level basis behind the milestones. Totals must reconcile.
 
-| Milestone | Task | Bucket | Focused days | Basis | Certainty |
-| :---: | :--- | :---: | :---: | :--- | :---: |
-| M1 | [Task] | Core Eng / Operational / Rollout | [X] | [Why this number — **said** / **inferred** / **assumed** / **from vendor docs**] | High/Medium/Low |
+| Milestone | Task (functionality) | Sort | Effort bucket | Focused days | Basis | Certainty |
+| :---: | :--- | :---: | :---: | :---: | :--- | :---: |
+| M1 | [Plain-language task, same wording as in Tasks] | A / A* / B / Ops / Rollout | Core Eng / Operational / Rollout | [X, from A review time or B range midpoint] | [Why this number — **said** / **inferred** / **assumed** / **from vendor docs**] | High/Medium/Low |
 
 **Reconciliation:**
 
@@ -238,42 +254,6 @@ No blanket discount is applied. Where Claude drafts code and tests, human time s
 
 ---
 
-## Technical Breakdown
-
-> For engineers. One section per repo for the chosen solution. Enough context to start, not a full spec.
-
-### `[repo-name]`
-
-**Business system:** [Plain-language name — e.g. Payment Processing]
-**Milestones:** M1, M2
-**Design decision:** [e.g. "Sync API call over event bus — existing service calls here are all synchronous and async infra isn't in place"]
-
-| Area / File | Change needed | Rationale |
-| :--- | :--- | :--- |
-| `src/domain/service.go` | [What to add or change] | [Why — ties to requirement or RAD risk] |
-| `src/api/handler.go` | [What to add or change] | [Why] |
-
-**Testing required:**
-- [ ] Unit tests for [component]
-- [ ] Integration test for [flow]
-
----
-
-### `[repo-name-2]`
-
-**Business system:** [Plain-language name]
-**Milestones:** M2, M3
-**Depends on:** `[repo-name]` completing M1 first
-
-| Area / File | Change needed | Rationale |
-| :--- | :--- | :--- |
-| `config/schema.sql` | [What to add] | [Why] |
-
-**Testing required:**
-- [ ] [Test type and scope]
-
----
-
 ## Cross-Repo Dependency Map
 
 > Only present when multiple repos are in scope (`--root` mode).
@@ -288,52 +268,12 @@ M1: [repo-a] — [deliverable]
 
 ---
 
-## Why These Numbers: Estimation Rationale
+## Calibration Plan
 
-> For PMs and Leadership. Explains the reasoning behind the effort estimates — not just what we built, but why the numbers are what they are.
-
-### What the estimate is actually measuring
-
-Software estimates often feel like guesses because the hardest part isn't writing the code — it's everything around it. The numbers in this document account for:
-
-- **Understanding and design time** — Before any code is written, the engineer needs to deeply understand the existing system, identify the right integration points, and make design decisions that won't create problems later. This is invisible work that PRDs never capture.
-- **Integration and coordination overhead** — [Specific to this project: e.g. "This feature touches 3 services that weren't originally designed to work together. Every integration point requires reading, testing, and validating behavior across system boundaries — not just writing new code."]
-- **Validation and review** — [Specific to this project: e.g. "Changes to the payment flow require security review, edge case testing, and sign-off from multiple stakeholders. The code might be written in hours; getting it production-ready takes days."]
-- **The 20% buffer** — Applied to Core Engineering only. This isn't padding — it's the empirical gap between "it works in dev" and "it's ready to ship." It accounts for the bugs found in code review, the edge cases surfaced in QA, and the config that only breaks in staging.
-
-### Why this milestone is sized the way it is
-
-| Milestone | Key sizing rationale |
-| :--- | :--- |
-| M1 | [e.g. "Larger than it looks — the schema migration requires careful rollback planning and coordination with Platform before we can safely run it in production"] |
-| M2 | [e.g. "This is the riskiest milestone. The legacy auth integration has no existing tests, so we're building blind until we write them ourselves — that's where most of the estimate lives"] |
-| M3 | [e.g. "Rollout is non-trivial because we're doing a gradual flag ramp across user cohorts, not a single deploy. Each increment requires monitoring and a manual sign-off before the next one"] |
-
-### What would make these numbers wrong
-
-These estimates hold **if** the assumptions in the RAD section stay true. The things most likely to change the timeline:
-
-- [e.g. "If the legacy auth service requires a contract change, M2 expands significantly — that negotiation alone could add a week"]
-- [e.g. "If staging access isn't provisioned before M1 starts, the entire sequence shifts right"]
-- [e.g. "If the external API rate limits are lower than documented, we'll need an additional caching layer that isn't scoped here"]
-
-### How to read the effort buckets
-
-All three buckets count **focused working days only**: time an engineer is actively working on the task. Waiting is never included in effort or dates; it lives in Wait-Time Assumptions.
-
-- **Core Engineering** days = design, code, review, writing tests, and debugging. Time waiting for someone else's review is not included.
-- **Buffer** = 20% added to Core Engineering only, shown in its own column. It is the gap between "it works in dev" and "it's ready to ship."
-- **Operational** days = hands-on setup, infra, access, and config work. Waiting on provisioning or approvals is not included.
-- **Rollout** days = hands-on demos, reconciliation, UAT, and training. Pilot runs, soak time, and sign-off waits are not included.
-- **Elapsed days** = focused days ÷ 0.65 focus factor, which allows for meetings, context switching, and interruptions.
-- **Dates** = running total of elapsed working days from day 0, with no waiting. If a wait assumption runs late, the dates listed beside it slip day for day.
+The first numbers are assumptions. After wave 1, record actual agent time, review time, rework passes, and tasks that bounced from A to B. Then adjust the Bucket A size table, the 20% buffer, and the 0.7 focus factor, and re-run the estimate.
 
 ---
 
-## Engineer Updates
+## What I Could Not Verify
 
-> Living document. Engineers: log estimate changes here as you uncover more context. PMs: check this table for the most current delivery picture.
-
-| Date | Engineer | Milestone | What changed / Why | Core Eng | Operational | Rollout | Dates affected |
-| :--- | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
-| | | | | | | | |
+[Anything inferred without seeing code, commands not confirmed, vendor claims not checked against current docs.]
