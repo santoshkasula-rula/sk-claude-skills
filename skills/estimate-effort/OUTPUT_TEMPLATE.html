@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[Project Name] · Effort Estimate v[0.1]</title>
+<style>
+:root{
+  --bg:#fff;--surface:#fff;--sub:#FAFAFA;--muted:#F4F5F6;--border:#E3E5E9;--strong:#15171A;--text:#26272A;--soft:#56575B;
+  --accent:#3E2E73;--accent-soft:#F2F2FC;--accent-tint:#E4E4F9;--accent-vivid:#9278F7;
+  --green:#38663A;--green-bg:#EAF5E4;--amber:#7A4A00;--amber-bg:#FBEEDB;--red:#CE1D1D;--red-bg:#FCEBEB;--teal:#296662;--teal-bg:#D9EBE9;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#15171A;--surface:#1D1F23;--sub:#1A1C20;--muted:#26282C;--border:#33363B;--strong:#F4F5F6;--text:#E0E2E6;--soft:#A9ADB5;
+  --accent:#C7C7FC;--accent-soft:#221E38;--accent-tint:#2D2750;--accent-vivid:#9278F7;
+  --green:#9ED8A0;--green-bg:#1D3320;--amber:#F1C58A;--amber-bg:#3A2A10;--red:#FF9C9C;--red-bg:#3D1717;--teal:#8AD6D2;--teal-bg:#12312F;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,"Helvetica Neue",Arial,system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:28px;letter-spacing:-.03em;color:var(--strong);margin:0 0 6px}
+h2{font-size:21px;letter-spacing:-.02em;color:var(--strong);margin:44px 0 12px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:16px;color:var(--strong);margin:24px 0 8px}
+p{margin:8px 0}
+a{color:var(--accent)}
+.meta{color:var(--soft);font-size:13px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+nav a{font-size:13px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-tint);padding:4px 10px;border-radius:999px;text-decoration:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:18px 0}
+.tile{background:var(--accent-soft);border:1px solid var(--accent-tint);border-radius:10px;padding:12px 14px}
+.tile b{display:block;font-size:26px;letter-spacing:-.03em;color:var(--accent)}
+.tile span{font-size:12.5px;color:var(--soft)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:10px 0}
+.card.warn{background:var(--amber-bg);border-color:transparent}
+.card.ok{background:var(--green-bg);border-color:transparent}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--muted);color:var(--strong);font-weight:600;font-size:12.5px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.total td{font-weight:600;background:var(--sub)}
+.tbl{overflow-x:auto}
+code{font-family:var(--mono);font-size:12.5px;background:var(--muted);padding:1px 5px;border-radius:4px}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin-right:4px;white-space:nowrap}
+.bot{background:var(--teal-bg);color:var(--teal)}
+.human{background:var(--accent-tint);color:var(--accent)}
+.ops{background:var(--amber-bg);color:var(--amber)}
+.hi{background:var(--red-bg);color:var(--red)}
+.med{background:var(--amber-bg);color:var(--amber)}
+.lo{background:var(--green-bg);color:var(--green)}
+.tag{font-size:11px;color:var(--soft);font-family:var(--mono)}
+ul{margin:6px 0 6px 20px;padding:0}
+li{margin:3px 0}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:12px 0}
+.node{flex:1 1 130px;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px}
+.node b{display:block;color:var(--strong);font-size:13px;margin-bottom:2px}
+.node.new{border-color:var(--accent-vivid);background:var(--accent-soft)}
+.node.reuse{border-color:var(--green-bg);background:var(--green-bg)}
+.node.later{border-style:dashed;color:var(--soft)}
+.arrow{align-self:center;color:var(--soft);font-size:18px}
+.bar{display:flex;height:26px;border-radius:6px;overflow:hidden;margin:6px 0;font-size:12px;color:#fff}
+.bar div{display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.legend{font-size:12.5px;color:var(--soft)}
+.ms{border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden}
+.ms-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;background:var(--accent-soft);padding:12px 16px}
+.ms-h h3{margin:0}
+.ms-b{padding:6px 16px 14px}
+.why{background:var(--sub);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:10px 0;font-size:13.5px}
+.why b.h{display:block;color:var(--strong);margin:8px 0 2px;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+.why .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.days{font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-.02em}
+@media print{nav{display:none}.ms{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!--
+TEMPLATE NOTES (delete before saving)
+- Core sections 1 to 5 are always present. Sections 6 to 9 are supporting: omit any that do not apply.
+- Keep the numbers identical to the markdown file.
+- Flow nodes: class "new" = new work, "reuse" = reuses an existing pattern, "later" = not in this estimate.
+- Chips: bot = bot drafts, human = a person decides or validates, ops = setup.
+-->
+
+<h1>[Project Name] · Effort Estimate v[0.1]</h1>
+<div class="meta">[One line of scope, e.g. which phase] · Drafted [date] · Status: draft for engineer sign-off · [Replaces v__, if any]</div>
+<nav>
+  <a href="#problem">Problem</a><a href="#solution">Solution</a><a href="#requirements">Requirements</a>
+  <a href="#architecture">Architecture</a><a href="#estimates">Estimates</a><a href="#risks">What moves the numbers</a>
+  <a href="#questions">Open questions</a><a href="#sources">Sources</a>
+</nav>
+
+<h2 style="border-top:0;margin-top:20px">Delivery days</h2>
+<div class="tiles">
+  <div class="tile"><b>[X]</b><span>delivery days for [scope], one engineer, working days</span></div>
+  <div class="tile"><b>[X]</b><span>heads-down engineering days (bot writes the code)</span></div>
+  <div class="tile"><b>[X]</b><span>buffer, 20% of core engineering</span></div>
+  <div class="tile"><b>2.0</b><span>general rollout allowance, not tied to a milestone</span></div>
+  <div class="tile"><b>[X ÷ 0.7]</b><span>calendar days at a 0.7 focus factor</span></div>
+</div>
+<div class="tbl"><table>
+<tr><th>#</th><th>Milestone</th><th class="n">Heads-down</th><th class="n">Buffer 20%</th><th class="n">Delivery days</th><th class="n">Calendar days</th><th class="n">Running total</th></tr>
+<tr><td>M1</td><td>[Name]</td><td class="n">[X]</td><td class="n">[0.2 × core]</td><td class="n">[sum]</td><td class="n">[sum ÷ 0.7]</td><td class="n">Day [N]</td></tr>
+<tr><td></td><td>Rollout (general allowance, not tied to a milestone)</td><td class="n">n/a</td><td class="n">n/a</td><td class="n">2.0</td><td class="n">[2.0 ÷ 0.7]</td><td class="n">Day [N]</td></tr>
+<tr class="total"><td></td><td>Total</td><td class="n">[X]</td><td class="n">[X]</td><td class="n">[sum + 2.0]</td><td class="n">[sum ÷ 0.7]</td><td class="n"></td></tr>
+</table></div>
+<div class="card">
+<b>What the added columns mean.</b>
+<ul>
+  <li><b>Buffer:</b> 20% of core engineering days only (not setup), for rework, surprises, and bot output needing more review than planned.</li>
+  <li><b>Rollout:</b> a single 2-day general allowance for cutover, UAT preparation, and training material. It is added once at the end, not to any milestone. <span class="tag">[assumed]</span></li>
+  <li><b>Calendar days:</b> delivery days ÷ 0.7. Assumption to calibrate.</li>
+  <li><b>Assumed to run in parallel, so not added:</b> security and compliance review handling (preparing write-ups, answering Legal and Security questions, fixing findings) and engagement with [stakeholder teams] (working sessions, demos, UAT, reconciliation reviews, sign-off walkthroughs). They are assumed to happen alongside heads-down work and not to extend it. <span class="tag">[assumed]</span> If they turn out to block the engineer, add that time back.</li>
+  <li><b>Not included:</b> the reviewers' own elapsed time ([name the reviews and assumed durations if known]), other teams' queue time, vendor replies, and any pilot run time. If a review runs past the assumed duration, the dates move day for day.</li>
+</ul>
+</div>
+<div class="card">
+<b>How to read the engineering days.</b> A bot writes the code and the tests. The days are the human engineer's heads-down time: directing the bot, reviewing what it wrote, validating against real data, setup the bot cannot do, and getting it in front of users. The milestone blocks below show these heads-down days only; buffer appears in the Delivery days table above and is not repeated; review handling and engagement are assumed parallel and are in no number. Waits and decisions are in no number. Each number is an assumption to calibrate after the first milestone.
+<div style="margin-top:8px"><span class="chip bot">Bot drafts, you review</span><span class="chip human">You decide or validate</span><span class="chip ops">You set up</span></div>
+</div>
+
+<!-- ============ 1 PROBLEM ============ -->
+<h2 id="problem">1. Problem statement</h2>
+<p>[2–3 sentences, plain language: who has the problem, what it costs, why now.] <span class="tag">[SAID source]</span></p>
+<div class="grid2">
+  <div class="card"><b>What is blocked or painful today</b><ul><li>[Constraint or pain]</li><li>[Constraint or pain]</li></ul></div>
+  <div class="card"><b>What success looks like</b><ul><li>[Measurable outcome]</li><li>[Measurable outcome]</li></ul></div>
+</div>
+
+<!-- ============ 2 SOLUTION ============ -->
+<h2 id="solution">2. Solution approach</h2>
+<p><b>[One bold sentence: the approach.]</b> [1–2 sentences: how it is built and why in these steps.]</p>
+<div class="flow">
+  <div class="node"><b>1 [Milestone]</b>[What it delivers]</div><span class="arrow">→</span>
+  <div class="node"><b>2 [Milestone]</b>[What it delivers]</div><span class="arrow">→</span>
+  <div class="node later"><b>Gate</b>[Decision before further investment, if any]</div><span class="arrow">→</span>
+  <div class="node"><b>3 [Milestone]</b>[What it delivers]</div>
+</div>
+<div class="card warn"><b>Main risk accepted.</b> [One honest sentence.] <span class="tag">[inferred]</span></div>
+<p class="meta">Possible approach, not a confirmed design. Alternatives considered: [name and one line each]. Out of scope: [list].</p>
+
+<!-- ============ 3 REQUIREMENTS ============ -->
+<h2 id="requirements">3. Requirements</h2>
+<h3>User stories</h3>
+<ul>
+  <li><b>[Role]:</b> I want [action] so that [outcome].</li>
+</ul>
+<h3>Functional requirements</h3>
+<div class="tbl"><table>
+<tr><th>Area</th><th>What the product does</th><th>Spec IDs</th><th>Milestone</th></tr>
+<tr><td>[Area]</td><td>[Observable behavior]</td><td>R-1</td><td>M1</td></tr>
+<tr><td>Guardrails</td><td>[Non-negotiable constraints]</td><td>R-n</td><td>All</td></tr>
+</table></div>
+<p class="meta">Undefined in the spec and carried as open items: [list]. Until defined, [what the estimate assumes].</p>
+
+<!-- ============ 4 ARCHITECTURE ============ -->
+<h2 id="architecture">4. Architecture, tl;dr</h2>
+<p><b>[One bold sentence: what is new, what is reused.]</b></p>
+<h3>Data flow</h3>
+<div class="flow">
+  <div class="node new"><b>[New component]</b>[One line]</div><span class="arrow">→</span>
+  <div class="node new"><b>[New component]</b>[One line]</div><span class="arrow">→</span>
+  <div class="node reuse"><b>[Existing component]</b>[Pattern being copied]</div><span class="arrow">→</span>
+  <div class="node reuse"><b>[Existing component]</b>[One line]</div>
+</div>
+<p class="legend"><span class="chip human">Purple = new work</span><span class="chip lo">Green = reuses an existing pattern</span><span class="chip" style="border:1px dashed var(--soft)">Dashed = not in this estimate</span></p>
+
+<h3>What we found in the repos (so we copy, not invent)</h3>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>Existing precedent</th><th>What it means</th></tr>
+<tr><td>[Piece of work]</td><td><code>[repo]</code> <code>[path]</code> [what it does]</td><td>[Copy / adapt / no precedent found] <span class="tag">[inferred]</span></td></tr>
+</table></div>
+
+<h3>Watch out</h3>
+<div class="card warn">[The one technical behavior most likely to cause silent errors or surprise, and what the plan does about it. Omit if none.] <span class="tag">[evidence tag]</span></div>
+
+<h3>Choices still open (possible approaches, not decisions)</h3>
+<ul>
+  <li><b>[Choice]:</b> [option A] vs. [option B]. Lean: [which, why].</li>
+</ul>
+
+<!-- ============ 5 ESTIMATES ============ -->
+<h2 id="estimates">5. Estimates</h2>
+<p>Heads-down engineering days, bot writes the code. No buffer here (see Delivery days above); review handling and engagement are assumed parallel; no waits or decisions. "Running total" is cumulative heads-down days.</p>
+<div class="bar" aria-label="Split of effort">
+  <div style="width:[%]%;background:#3E2E73">Core [X] (review, validate)</div>
+  <div style="width:[%]%;background:#8A5A00">Setup [X]</div>
+</div>
+<div class="tbl"><table>
+<tr><th>#</th><th>Milestone</th><th>Stakeholder can…</th><th class="n">Core</th><th class="n">Setup</th><th class="n">Days</th><th class="n">Running total</th><th>Complexity</th><th>Confidence</th></tr>
+<tr><td>M1</td><td>[Name]</td><td>[What they can now do]</td><td class="n">[X]</td><td class="n">[X]</td><td class="n">[sum]</td><td class="n">Day [N]</td><td><span class="chip med">Medium</span></td><td><span class="chip med">Medium</span></td></tr>
+<tr><td colspan="9" style="text-align:center;color:var(--soft)">[Optional gate row: decision before further investment; no engineering days]</td></tr>
+<tr class="total"><td></td><td>Total</td><td></td><td class="n">[X]</td><td class="n">[X]</td><td class="n">[sum]</td><td class="n"></td><td></td><td></td></tr>
+</table></div>
+
+<!-- Repeat one block per milestone -->
+<div class="ms">
+  <div class="ms-h"><h3>M1 · [Milestone name]</h3><span class="days">[X] days <span class="meta">([X] core · [X] setup)</span></span></div>
+  <div class="ms-b">
+    <p><b>Outcome:</b> [What the named stakeholder can use, tied to an acceptance criterion.] [Sign-off needed before it goes live, if any.]</p>
+    <div class="why">
+      <div class="top"><span class="chip med">Complexity: [Low/Medium/High]</span><span>[One line on what makes it this complexity.]</span></div>
+      <b class="h">Why these days</b>
+      <ul>
+        <li><b>[Factor] ([X]).</b> [Why it adds or removes days, pattern path if one exists.] <span class="tag">[evidence]</span></li>
+        <li><b>[Factor] ([X]).</b> [...]</li>
+      </ul>
+      <b class="h">What would change it</b>
+      <ul><li>[If X: about +N days. If Y: about -N days.]</li></ul>
+    </div>
+    <table>
+      <tr><th>Technical change, in plain language</th><th>Who</th><th class="n">Days</th></tr>
+      <tr><td>[Human-readable change, following <code>[pattern path]</code>]</td><td><span class="chip bot">Bot drafts</span><span class="chip human">You review</span></td><td class="n">[X]</td></tr>
+      <tr><td>Setup: [access, infra, config]</td><td><span class="chip ops">Ops</span></td><td class="n">[X]</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card ok"><b>How this compares with v[previous].</b> [Only when a previous estimate exists: what moved and why, with the old and new totals.] <span class="tag">[assumed]</span></div>
+
+<!-- ============ 6 WHAT MOVES THE NUMBERS ============ -->
+<h2 id="risks">6. What moves the numbers</h2>
+<div class="tbl"><table>
+<tr><th>If this turns out true…</th><th>Effect</th><th>Milestone</th><th>Evidence</th></tr>
+<tr><td>[Assumption or risk]</td><td>[About +N days / -N days, and what else changes]</td><td>M1</td><td><span class="chip med">assumed</span></td></tr>
+</table></div>
+<h3>Decisions that unlock the most work</h3>
+<ul>
+  <li><b>[Decision]:</b> [what it unlocks, e.g. N tasks become bot-ready]. [Who decides.]</li>
+</ul>
+<p class="meta">Decisions are prerequisites, not estimated work. Not in any number above: waits ([name the known ones and who they depend on]) and the reviewers' own time. Each can move the dates. Review delays are usually the largest schedule risk.</p>
+
+<!-- ============ 7 OPEN QUESTIONS ============ -->
+<h2 id="questions">7. Open questions to validate with the team</h2>
+<div class="card warn"><b>Timeline dependency.</b> [Any other team's availability or ownership the plan relies on. A wait, not engineering days.] [State what is unconfirmed, e.g. no CODEOWNERS found.]</div>
+<div class="card">
+<b>Q1. [Question the team must answer]</b>
+<p>[Answer as far as the repos show it, with file or table names.] <span class="tag">[from repo]</span></p>
+<p><b>To confirm with the team:</b> [the part the repos cannot answer].</p>
+</div>
+<div class="card">
+<b>Q2. What changes do we need from [other team]?</b>
+<div class="tbl"><table>
+<tr><th>Change</th><th>Where</th><th>Milestone</th></tr>
+<tr><td>[Change]</td><td><code>[repo or system]</code></td><td>M1</td></tr>
+</table></div>
+<p><b>How much of the estimate this touches.</b> Roughly [N] of the [X] days sit in systems owned or reviewed by [team]. This is my split from the task lines, not a team commitment. <span class="tag">[assumed]</span></p>
+</div>
+
+<!-- ============ 8 SOURCES ============ -->
+<h2 id="sources">8. Sources and what I could not verify</h2>
+<div class="grid2">
+<div class="card"><b>Documents</b><ul><li>[Spec / TDD / transcript, with version]</li></ul></div>
+<div class="card"><b>Repos read</b><ul><li><code>[repo]</code>: [what was used]</li></ul></div>
+</div>
+<h3>Not verified</h3>
+<ul>
+  <li>[Inferred without seeing code, commands not confirmed, vendor claims not checked against current docs.]</li>
+  <li>Read access only; no tests were run and no code was changed.</li>
+</ul>
+<h3>Calibration</h3>
+<p>These are first numbers. After M1, record the bot's actual draft quality, review time, rework passes, and tasks that needed more than review. Then re-run the estimate before committing the later milestones.</p>
+
+<!-- ============ 9 LATER PHASE (optional) ============ -->
+<h2 id="later">9. Later phase preview (optional, not estimated)</h2>
+<div class="card warn"><b>Not estimated.</b> [Why: e.g. requirements do not exist yet. When it would start.]</div>
+<div class="flow">
+  <div class="node"><b>[Step]</b>[One line]</div><span class="arrow">→</span>
+  <div class="node later"><b>[Step]</b>[Later, not planned]</div>
+</div>
+<p><b>Where the human effort will go:</b> [short list]. <b>Open questions for its spec:</b> [short list].</p>
+</div>
+</body>
+</html>

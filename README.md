@@ -19,7 +19,7 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 
 | Skill | Description |
 |-------|-------------|
-| [estimate-effort](skills/estimate-effort/SKILL.md) | Thought-partner for engineers — collects PRDs and transcripts, probes for unstated risks, design tradeoffs, and assumptions via targeted questions, then generates a PM-readable implementation plan with RAD |
+| [estimate-effort](skills/estimate-effort/SKILL.md) | Turns a spec and technical structure into an AI-assisted estimate — slices tasks, sorts them into agent-ready (A) and human-led (B), then groups them into dated milestones with wait-time assumptions and a RAD. `--lite` handles PRD plus transcript when no spec exists |
 | [epic-story-builder](skills/epic-story-builder/SKILL.md) | Turns an Effort Breakdown Analysis into weekly-demo-sized Epics and Stories for Jira |
 | [llm-assisted-effort-estimate](skills/llm-assisted-effort-estimate/SKILL.md) | Strategic engineering thought partner using HIE + RAD-E + PERT frameworks — produces a leadership-ready report with confidence scores, delivery trade-offs, and probabilistic effort ranges |
 | [sprint-goals](skills/sprint-goals/SKILL.md) | Generates a unified sprint goals summary across PAR, MARTECH, DEA, and NEV boards — synthesizes active sprint tickets into focus areas, blockers, and a leadership summary |

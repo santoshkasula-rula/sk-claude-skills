@@ -1,6 +1,6 @@
 ---
 name: estimate-effort
-description: Turns a spec (and its technical structure) into an AI-assisted estimate. Slices work into tasks, sorts each into Bucket A (agent-ready) or Bucket B (human-led), then groups them into milestones with dated plans, wait-time assumptions, and a RAD. Falls back to a lite mode (PRD plus transcript) when no spec exists.
+description: Turns a spec, technical design (TDD), and repo into a visual estimate document, as markdown plus a standalone HTML file. Sections are Problem Statement, Solution Approach, Requirements, Architecture, and Estimates by milestone in heads-down engineering days, assuming a coding bot writes the code, with a Delivery days view at the top that adds a 20% buffer and states that compliance review handling and engagement run in parallel. Falls back to a lite mode (PRD plus transcript) when no spec exists.
 disable-model-invocation: true
 argument-hint: "[--root] [--lite] [--cards]"
 allowed-tools: Read Bash(find *) Bash(ls *) Bash(git rev-parse *) Write
@@ -8,19 +8,20 @@ allowed-tools: Read Bash(find *) Bash(ls *) Bash(git rev-parse *) Write
 
 # estimate-effort
 
-Read `OUTPUT_TEMPLATE.md` from `${CLAUDE_SKILL_DIR}`.
+Read `OUTPUT_TEMPLATE.md` and `OUTPUT_TEMPLATE.html` from `${CLAUDE_SKILL_DIR}`.
 
 Flags in $ARGUMENTS:
 - `--root`: multi-repo discovery in Step 2.
-- `--lite`: no spec exists. Start from PRD and transcript, and do Step 3b (requirements synthesis and a brief solution check).
-- `--cards`: also write one self-contained Claude Code task card per Bucket A task. Off by default, because cards are implementation detail.
+- `--lite`: no spec exists. Start from PRD and transcript, and do Step 3b.
+- `--cards`: also write one self-contained Claude Code task card per bot-ready task. Off by default, because cards are implementation detail.
 
-Core idea: shrink the human-led work. Sort every task into A or B, carve A pieces out of B, then turn the sorted tasks into milestones and dates a PM can plan around.
+Core idea: estimate the **human heads-down engineering days**, assuming a coding bot writes the code and tests. Present it visually, short, for someone who has not read the spec.
 
 Conventions used throughout:
 - **Evidence tags** on every non-trivial claim: **said**, **inferred**, **assumed**, **from vendor docs**. Check vendor claims against current docs (fetch them); if you cannot, tag **assumed**.
-- **Heads-down engineering time only** in effort and dates. Meetings, alignment, and decision-making are never estimated. Waiting goes in Step 8b.
-- **No blanket AI discount.** AI help shows up as Bucket A review time, not a percentage cut.
+- **Heads-down days are pure.** They exclude waits (reviews, access, vendor replies), buffer, and decision-making. Buffer is added only in the **Delivery days** view at the top (Step 7), never inside heads-down days or milestone blocks. Security and compliance review handling and stakeholder engagement are assumed to run in parallel with heads-down work, so they are called out as an assumption and not added as days.
+- **No blanket AI discount.** The bot writes code, so human time is design of the hard parts, reviewing bot output, validating behavior, integration, and hands-on setup. Say which.
+- **Visuals first.** Every section leads with a diagram or table where one helps. Prose is short.
 - **Never invent** paths, functions, or commands. Write "not found".
 
 ---
@@ -30,10 +31,10 @@ Conventions used throughout:
 Ask for each in turn and read it before asking for the next.
 
 1. **Spec** (required unless `--lite`): latest version, with requirement IDs if it has them.
-2. **Technical structure**: output of `spec-to-technical-structure`. If missing, say confidence is lower and offer to run that skill first.
+2. **Technical design (TDD / technical structure)**: for example the output of `spec-to-technical-structure`. If missing, say confidence is lower and offer to run that skill first.
 3. **Mocks** (optional, for UI work): reference screens by name.
 4. **Transcript or discussion notes**: "The part where someone said 'I'm not sure how long that'll take' counts. Path, paste, or skip." Normalize it: strip timestamps, speaker labels, `[inaudible]`.
-5. **Context**: team size, test and CI conventions, feature flag system, definition of done, anything Claude Code must never touch.
+5. **Context**: team size, test and CI conventions, feature flag system, definition of done, anything the bot must never touch.
 6. **More**: "Anything else that would embarrass us if we ignored it? (path, paste, or done)". Repeat until done.
 
 If the spec and a 1-pager disagree, the spec wins. Transcript anxiety markers override optimism on the same component.
@@ -56,7 +57,7 @@ Wait for the reply. If no git root, skip silently.
 
 For every task you will propose, find and record:
 - Files and modules it touches (paths).
-- An **existing pattern to follow**, with its path. No precedent is a signal toward Bucket B or a spike.
+- An **existing pattern to follow**, with its path. No precedent means more human time or a spike.
 - How tests are written and run (discover from package.json, Makefile, CI config; do not guess commands).
 - How feature flags, config, and migrations are done.
 
@@ -64,96 +65,120 @@ If you cannot read the repos, say so and lower confidence.
 
 ## Step 3b — Requirements check (only if `--lite` or the spec is thin)
 
-Extract use cases, acceptance criteria, success metrics, scope in and out, constraints. Tag each with evidence. Present one summary:
+Extract the problem, use cases, user stories, acceptance criteria, success metrics, scope in and out, constraints. Tag each with evidence. Present one summary:
 
-> **Here's what I think we're building. Fight me on anything wrong:** [use cases, AC, metrics, constraints, out of scope]
+> **Here's what I think we're building. Fight me on anything wrong:** [problem, stories, requirements, constraints, out of scope]
 
-Ask at most one question. Then, in lite mode only, give a **brief** solution check: 2 candidate approaches with one line each on touches and risk, a recommendation, and why. In normal mode, take the approach from the technical structure and do not re-litigate it.
+Ask at most one question. Then, in lite mode only, give a **brief** solution check: 2 candidate approaches with one line each on what they touch and their risk, a recommendation, and why. In normal mode, take the approach from the technical design and do not re-litigate it.
 
 ## Step 4 — Slice into tasks
 
-Smallest units that each deliver a testable result and fit one PR. Slice vertically where you can, horizontally where you must (shared types, schema). One-sentence goals; if it needs more, it is two tasks. Every task traces to spec IDs (and a mock screen if UI). Separate "build" and "verify". Decisions are not tasks: list them as open decisions (prerequisites) with an owner, and do not size them.
+Smallest units that each deliver a testable result and fit one PR. Slice vertically where you can, horizontally where you must (shared types, schema). Name each task by the functionality it delivers, in plain language a PM could read ("Users can save a payment method at checkout"), not by file or layer. Put the technical detail in a short bulleted list under it. Every task traces to spec IDs (and a mock screen if UI).
 
-Name each task by the functionality it delivers, in plain language a PM could read ("Users can save a payment method at checkout"), not by file or layer. Put the technical detail (files, pattern to follow, data or API change, tests) in a bulleted list under the task.
+Decisions are not tasks: list them as open decisions with an owner, unsized.
 
-Also create **Operational** tasks (setup, infra, access, config, secrets) and **Rollout** tasks (reconciliation, UAT preparation and execution, training material). Count hands-on work only; leave out meetings, demo sessions, and alignment.
+Also include **Setup** tasks (infra, access, config, secrets) per milestone. Do not create per-milestone Rollout tasks: rollout (cutover, UAT preparation, training material) is a single 2-day general allowance applied once in the Delivery days view (Step 7).
 
-## Step 5 — Classify: the Bucket A gate
+## Step 5 — Bot or human: what drives the effort
 
-A build task is **Bucket A only if all eight are true**; otherwise it is Bucket B (or split until the A part passes).
+For each build task, decide how much human time it needs. A task is **bot-ready** only if all eight are true:
 
-1. **Unambiguous**: no open question, ASSUMED item, or undecided decision affects it.
-2. **Pattern exists**: a close precedent in the repo, cited by path.
-3. **Small and contained**: one layer, one service, about 8 files or fewer, reviewable in under 30 minutes.
-4. **Testable**: automated tests or a concrete command can check it.
-5. **Reversible and safe**: additive, behind a flag, no destructive migration or public contract change.
-6. **Not high-judgment**: not authorization, encryption or secrets, PHI handling or logging, consent, money or billing, audit-trail semantics, or compliance rules.
-7. **No missing inputs**: no credentials, vendor decision, missing design, or other team's unfinished work.
-8. **Self-contained**: doable from the task description plus the repo.
+1. Unambiguous: no open question or undecided decision affects it.
+2. Pattern exists: a close precedent in the repo, cited by path.
+3. Small and contained: one layer, one service, about 8 files or fewer.
+4. Testable: automated tests or a concrete command can check it.
+5. Reversible and safe: additive, behind a flag, no destructive migration or public contract change.
+6. Not high-judgment: not authorization, encryption or secrets, PHI handling or logging, consent, money or billing, audit-trail semantics, or compliance rules.
+7. No missing inputs: no credentials, vendor decision, missing design, or other team's unfinished work.
+8. Self-contained: doable from the task description plus the repo.
 
-Record which gates failed for every B item. Mark `A*` for tasks that pass but sit next to sensitive code, and say what the reviewer must check. Sensitive logic itself is always B. Operational and Rollout tasks are human work and are not sorted into A.
+Bot-ready tasks cost **review time** only. Tasks that fail a gate are **human-led** and cost human days for the part a person must own (the hard logic, integration, debugging); carve out what the bot can still draft (types, scaffolding, fixtures, tests from the spec, UI shells, docs). Sensitive logic is always human-led. Healthcare and compliance-sensitive areas default to human-led.
 
-## Step 6 — Shrink Bucket B
+## Step 6 — Assumptions, risks, and execution order
 
-For each B item: carve out A tasks (types, additive migration scaffolding, stubs, fixtures, tests written from the spec, UI shells, API client wiring, docs); state the **human core**; state the **unlock** (the decision that would turn it into A); suggest how human and Claude Code collaborate.
+Present a short list and up to 3 targeted questions in one message:
 
-## Step 7 — RAD and execution order
+> **Here are the assumptions, risks, and dependencies. Fix anything that's wrong:** [each with source]
 
-Present a pre-filled RAD and up to 3 targeted questions in one message:
+Pick questions that would change the estimate (area most likely to blow up, what must quietly be true, outside teams who must say yes, new-ground work). Never ask more than 3, never re-ask what documents answered. Wait, then update.
 
-> **Here's the RAD. Fix anything that's wrong:** Risks / Assumptions / Dependencies / Success criteria, each with source.
+Then order the work: group tasks into waves that can run in parallel without editing the same files, and name the critical path.
 
-Pick questions that would change the estimate (most-likely-to-blow-up area, what must quietly be true, outside teams who must say yes, what people will assume is in scope, new-ground work). Never ask more than 3, never re-ask what documents answered. Wait, then update the RAD.
+## Step 7 — Estimate
 
-Then plan execution: dependency graph grouped into waves; tasks in a wave must not edit the same files; unblocking work first; open decisions listed as prerequisites with owners, not sized; name the critical path.
+**Heads-down days per task.**
+- Bot-ready: review time (XS about 5 min, S 10 to 15 min, M 20 to 30 min). Bigger than M, split.
+- Human-led: S 1 to 2 days, M 3 to 5, L 6 to 10. XL over 10: split or spike first.
+- Setup: days of hands-on work.
 
-## Step 8 — Estimate, milestones, dates
+Roll up to **half-day** granularity per milestone. Give a range and confidence where uncertain, and say what would tighten it.
 
-**Task sizing**
-- Bucket A: XS (one file, about 5 min review), S (about 3 files, 10 to 15 min), M (about 8 files, 20 to 30 min). Bigger than M, split. Report review time plus a rework allowance (for example "S: 15 min, 30% chance of one revision").
-- Bucket B: S 1 to 2 days, M 3 to 5, L 6 to 10, XL over 10 (split or spike first). Give a range, a confidence, and what would tighten it.
-- Operational and Rollout: days, with a range where uncertain.
+**Milestones.** 3 to 5 incremental milestones, each putting something usable in a named stakeholder's hands, tied to an acceptance criterion, each unblocking the next. Use the documents' own language. For each milestone:
+- **Technical changes** in human-readable bullets (what changes in the system, not file lists).
+- **Who does what**: what the bot drafts, what a human owns.
+- **Heads-down days**, with the split between review of bot output, human-led work, and setup.
+- **Outcome**: what the named stakeholder can now do, tied to an acceptance criterion.
+- **Complexity**: Low, Medium, or High, with one line on what drives it.
+- **What would change it**: the 1 to 3 things that would move this milestone's days, with the size of the move.
+- **Why this many days**: the 2 to 4 specific factors that add or remove days, each tagged with its evidence and its rough day contribution (for example "no precedent for this integration, +1.5d, inferred" or "close pattern at `src/api/addresses.ts`, bot-ready, review only"). Draw from: new ground versus existing pattern, number of systems touched, sensitive logic that must stay human-led, test coverage gaps, data migration, and unclear requirements. The contributions must add up to the milestone's heads-down days.
 
-**Milestones.** 3 to 5 incremental milestones (no Discovery milestone, since scoping and alignment are not estimated), each putting something usable in a named stakeholder's hands, tied to an acceptance criterion, each unblocking the next. Use the documents' own language, no generic placeholders.
+**Heads-down days are the plain sum.** Do not pad them, and do not count waits.
 
-**Per milestone, three separate buckets:**
-- **Core Engineering**: A review time (converted to days) plus B days: design, code, review, tests, debugging.
-- **Operational** and **Rollout**: as above.
+**Delivery days.** Per milestone: delivery days = heads-down + buffer, where buffer = 20% of the Core days only (not Setup). Then add one **general Rollout allowance of 2.0 days** to the project total, as its own row after the last milestone and never inside a milestone. It is a fixed assumption (tag it **assumed**); change it only if the documents give a different figure. The running total adds it at the end.
 
-**Buffer.** 20% on the Core Engineering B portion only, shown as its own column. Bucket A already carries a rework allowance. Never buffer Operational or Rollout.
+**Parallel work (assumption, not days).** Security and compliance review handling (preparing write-ups, answering Legal and Security questions, fixing findings) and stakeholder engagement (working sessions, demos, UAT, reconciliation reviews, sign-off walkthroughs) are assumed to happen alongside heads-down work and not to extend it. State this once in the Delivery days card, tagged **assumed**, and name which milestones carry the most of it. Do not size it. If the documents say it blocks the engineer, add that time back and say so.
 
-**Focused to calendar.** Focused days = Core Eng + buffer + Operational + Rollout. Calendar days = focused ÷ 0.7 (state this as an assumption to calibrate). Effort stays focused-only: meetings, alignment, and decisions are not estimated as work, and the 0.7 factor is only the conversion to calendar time.
+**Core and Setup.** Split each milestone's days into Core (review of bot output plus human-led work) and Setup (infra, access, config). Show the split in the table and the bar.
 
-**Dates.** One planning date per milestone as a running total of calendar working days from day 0, with the underlying range shown beside it. No T-shirt sizes. Every file written uses the same dates.
+**Previous version.** If an earlier estimate exists, say what moved and why, with old and new totals.
 
-**Confidence and risk flag** per milestone: High, Medium, or Low, and 🔴 (anxiety marker or RAD risk), 🟡 uncertain, 🟢 well understood.
+**Calendar days** = delivery days ÷ 0.7, shown as a separate column (state the 0.7 as an assumption to calibrate). The milestone "Day N" in the Delivery days table is a running total of calendar days from day 0.
 
-**Bottom-up task table** behind the milestones: task, bucket (A, A*, B, Ops, Rollout), focused days, basis with evidence tag, certainty. Task totals must reconcile to milestone bucket totals; show the reconciliation and fix any mismatch.
+**Not included** (list, no durations unless the documents give them): the reviewers' own elapsed time (Legal, Security), PR review turnaround, access provisioning, other teams' queue time, vendor replies, pilot run time, and open decisions. Name the waits you know of and who they depend on, and say which dates slip day for day if one runs late.
 
-**Totals to report:** task counts by A, A*, B; share in A by count and by effort; A review hours; B day range; excluded items; and the effect of unresolved decisions ("if D-2 resolves as X, N tasks move B to A").
+**Confidence and risk flag** per milestone: High, Medium, or Low, and 🔴 (anxiety marker or risk), 🟡 uncertain, 🟢 well understood.
 
-## Step 8b — Wait-time assumptions
+**What moves the numbers.** List the assumptions and risks that would change the total as "if X, about +N days" rows, each with milestone and evidence tag. List the decisions that would turn the most human-led work into bot-ready work, with who decides.
 
-Waiting is **not** in effort or dates. List, per milestone: PR review turnaround, Legal/Security/architecture review, access and environment provisioning, vendor replies, QA queue, pilot runs, flag-ramp soak, UAT scheduling, sign-off. For each give assumed working days, who it depends on, an evidence tag, and which milestone dates slip day for day if it runs late. State a labeled default where nothing is known. Call out that **review delays (Legal, Security) are the biggest schedule risk**.
+**Open questions.** Where the repos can answer a question, answer it with file or table names and mark what the team still has to confirm. List changes needed from other teams, by milestone, and roughly what share of the days sit in systems they own or review. Label that split an assumption.
 
-> **These waits are not in the dates. Each says what slips if it's late. Fix anything off:** [table]
+**Totals to report:** total delivery days, heads-down days, buffer, calendar days, final day; task counts bot-ready versus human-led; the share of effort that is human-led; and the effect of unresolved decisions ("if D-2 resolves as X, N tasks become bot-ready").
 
-Wait, then update. Also report an expected-wait scenario as a separate line, never replacing the plan dates. Assign confidence per milestone and overall.
+## Step 8 — Write the outputs
 
-## Step 9 — Write the output
+Write both, with the same content and numbers:
+- `Effort Breakdown Analysis - [Project Name].md` following `OUTPUT_TEMPLATE.md`.
+- `Effort Breakdown Analysis - [Project Name].html` following `OUTPUT_TEMPLATE.html`: one self-contained file, rendered diagrams, effort bars, light and dark friendly.
 
-Write `Effort Breakdown Analysis - [Project Name].md` in the current directory following `OUTPUT_TEMPLATE.md`. Tasks go in the Tasks section grouped by milestone: a functional title, then a bulleted technical-work list, then size and AI-assisted split. Keep the document lean; there is no per-repo breakdown or rationale essay, because the technical detail lives in each task. If `--cards`, also write `tasks/A-<nn>-<slug>.md` per Bucket A task: goal, context, files and pattern path, steps, checkable acceptance criteria, exact test commands, guardrails (additive only, no PHI or real names in fixtures, behind a flag), human review focus. Cards must work pasted into a fresh Claude Code session.
+Both files open with **Delivery days** (tiles for delivery, heads-down, buffer, and calendar days; a per-milestone table with those columns and a running total; a card explaining the buffer, the parallel-work assumption for compliance review handling and engagement, and what is not included), then the sections in order:
 
-**Mermaid.** Use Mermaid in every markdown file. Labels short, no parentheses, no line breaks inside labels. Whenever you produce a visual, also export it to a standalone HTML file next to the markdown.
+Core, always present:
+1. **Problem statement**: what is blocked or painful, what success looks like.
+2. **Solution approach**: milestone flow (with a gate if one exists), main risk accepted, alternatives, out of scope.
+3. **Requirements**: user stories, functional requirements with spec IDs and the milestone that delivers each, undefined items.
+4. **Architecture, tl;dr**: data flow marked new / reuse / later, "what we found in the repos" precedent table from Step 3, a "watch out" card for the one behavior most likely to cause silent errors, and open design choices (as possible approaches).
+5. **Estimates**: milestone table, then one block per milestone (outcome, complexity, why these days, what would change it, technical change table with who and days), and a comparison with the previous version only if one exists.
 
-**Calibration.** End the document with a short plan: after wave 1, record actual agent time, review time, rework passes, and tasks that bounced to B, then re-run the estimate. First numbers are assumptions.
+Supporting, omit any that do not apply:
+6. **What moves the numbers**: if-X-then-N-days table, decisions that unlock the most work, and the not-included note.
+7. **Open questions**: answered from the repos where possible, with what still needs the team, plus changes needed from other teams and the share of the estimate they touch.
+8. **Sources and what I could not verify**, with the calibration line.
+9. **Later phase preview**: shape only, not estimated.
 
-**Safety.** Read repos only. Never claim tests pass without running them. Healthcare and compliance-sensitive areas default to Bucket B.
+Do not invent sections beyond these.
 
-**Consistency check (final step).** Re-read every file written. Confirm milestone dates, bucket totals, buffer, calendar days, confidence, and wait assumptions match exactly. Fix stale numbers.
+**Visuals.** Include at least: a milestone flow, an architecture flow marking new versus reused work, and effort bars. In the markdown use Mermaid (labels short, no parentheses, no line breaks inside labels). In the HTML follow `OUTPUT_TEMPLATE.html`: its CSS flow nodes, chips, tiles, and milestone cards, so the file works offline except fonts.
+
+If `--cards`, also write `tasks/A-<nn>-<slug>.md` per bot-ready task: goal, context, files and pattern path, steps, checkable acceptance criteria, exact test commands, guardrails (additive only, no PHI or real names in fixtures, behind a flag), human review focus. Cards must work pasted into a fresh Claude Code session.
+
+**Calibration.** End the Estimates section with one line: after the first milestone, record actual review time, rework, and tasks that turned out human-led, then re-run the estimate. First numbers are assumptions.
+
+**Safety.** Read repos only. Never claim tests pass without running them.
+
+**Consistency check (final step).** Re-read both files. Confirm that heads-down + buffer = delivery days per milestone, and that milestone days, totals, calendar days, dates, and confidence match exactly between the markdown and the HTML. Fix stale numbers.
 
 End with:
-> **Share with PMs / leadership:** Executive Summary, Requirements, Recommendation, Milestones
+> **Share with PMs / leadership:** Problem Statement, Solution Approach, Estimates summary
 > **Share with engineers:** full document
 
-Then reply in chat with the file locations, the headline (task counts, share in A, review hours, B day range, final date), the top 3 decisions that would move the most work to A, the first wave ready to start, and what you were least sure about.
+Then reply in chat with the file locations, the headline (delivery days, heads-down days, calendar days, final day, human-led share), the top 3 decisions that would move the most work to the bot, the first wave ready to start, and what you were least sure about.
