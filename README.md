@@ -28,6 +28,7 @@ To install a skill into a Claude Code project, copy the relevant `SKILL.md` into
 | [incident-postmortem-summary](skills/incident-postmortem-summary/SKILL.md) | Summarizes Datadog incidents under Santosh's teams — root cause, lessons learned, and Jira-enriched action items per incident, plus a cross-incident executive summary |
 | [one-pager-to-spec](skills/one-pager-to-spec/SKILL.md) | Converts a product one-pager into a concise requirements spec with user journey, numbered functional requirements, and a Mermaid end-to-end flowchart |
 | [prd-and-technical-design](skills/prd-and-technical-design/SKILL.md) | Assembles one combined PRD + Technical Design (+ optional estimate) with a shared glossary, stable FR/NFR IDs, named increments and options, and requirement-to-design-to-effort traceability |
+| [spec-to-estimate-summary](skills/spec-to-estimate-summary/SKILL.md) | Turns a spec, technical design, and estimates doc into one self-contained HTML project brief with architecture flow diagrams and per-milestone effort estimates with rationale |
 
 ## Plugins
 
